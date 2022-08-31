@@ -10,9 +10,9 @@ class TestSetUp(TransactionTestCase):
     def setUp(self):
         self.register_url = '/api/user/'
         self.user_payload = {
-            'username': 'testing_user',
-            'password': 'testing_password',
-            'email': 'testing_email@gmail.com',
+            'username': 'testing_setup_user',
+            'password': 'testing_setup_password',
+            'email': 'testing_setup_email@gmail.com',
         }
         response = self.client.post(self.register_url, self.user_payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -30,6 +30,7 @@ class TestSetUp(TransactionTestCase):
         self.access_token = res.data['access']
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
+class TestUserModel(TestSetUp):
     def test_auth_model(self):
         self.user_payload = {
             'username': 'testing_user',
@@ -44,7 +45,6 @@ class TestSetUp(TransactionTestCase):
         u.delete()
         self.assertFalse(User.objects.filter(id=u.id).exists())
 
-class TestUserModel(TestSetUp):
     def test_auth_view(self):
         self.register_url = '/api/user/'
         self.user_payload = {
@@ -81,9 +81,14 @@ class TestCustomerModel(TestSetUp):
 
 
 class TestCustomerView(TestSetUp):
+    customer_url = '/api/customer/'#reverse('birracraf.api:customer-list')
+
+    def test_list_customer(self):
+        response = self.client.get(self.customer_url, format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     def test_create_customer(self):
-        self.access_token
-        self.customer_url = '/api/customer/'#reverse('birracraf.api:customer-list')
         payload = {
             'name': 'John Johnson',
             'address': 'Irigoyen 800',
