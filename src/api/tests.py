@@ -72,7 +72,7 @@ class TestUserView(TestSetUp):
 
 
 class TestCustomerModel(TestSetUp):
-   def test_create_customer(self):
+    def test_create_customer(self):
         name = 'John Johnson'
         address = 'Irigoyen 800'
         email = 'jj@gmail.com'
@@ -92,6 +92,51 @@ class TestCustomerModel(TestSetUp):
         self.assertEqual(c.cellphone, cellphone)
         self.assertEqual(c.type, type)
         c.delete()
+        self.assertFalse(Customer.objects.filter(id=c.id).exists())
+
+    def test_update_customer(self):
+        name = 'Casey Carter'
+        address = 'Costanera 871'
+        email = 'cc@gmail.com'
+        cellphone = '113976753323'
+        type = 'Comerce'
+        c = Customer.objects.create(
+            name=name,
+            address=address,
+            email=email,
+            cellphone=cellphone,
+            type=type,
+        )
+        self.assertTrue(Customer.objects.filter(id=c.id).exists())
+        c.name = 'Daniel Dawson'
+        c.email = 'dd@gmail.com'
+        c.type = 'Particular'
+        c.save()
+        c =  Customer.objects.get(id=c.pk)
+        self.assertNotEqual(c.name, name)
+        self.assertEqual(c.address, address)
+        self.assertNotEqual(c.email, email)
+        self.assertNotEqual(c.type, type)
+        self.assertEqual(c.cellphone, cellphone)
+        c.cellphone = '2234119965'
+        c.address = 'Ferre 435'
+        c.save(update_fields=['cellphone'])
+        c =  Customer.objects.get(id=c.pk)
+        self.assertNotEqual(c.cellphone, cellphone)
+        self.assertEqual(c.address, address)
+
+    def test_delete_customer(self):
+        c = Customer.objects.create(
+            name='read_customer',
+            address='read_customer address',
+            email='read_customer@email.com',
+            cellphone='112233445566',
+            type='Particular',
+        )
+        self.assertTrue(Customer.objects.filter(id=c.id).exists())
+        c.delete()
+        with self.assertRaises(Customer.DoesNotExist):
+            cu = Customer.objects.get(id=c.id)
         self.assertFalse(Customer.objects.filter(id=c.id).exists())
 
 
@@ -170,6 +215,9 @@ class TestCustomerView(TestSetUp):
         self.assertEqual(payload['email'], response.data['email'])
         self.assertEqual(payload['cellphone'], response.data['cellphone'])
         self.assertEqual(payload['type'], response.data['type'])
+        self.assertNotEqual(c.name, response.data['name'])
+        self.assertNotEqual(c.email, response.data['email'])
+        self.assertNotEqual(c.type, response.data['type'])
 
     def test_partial_update_customer(self):
         c = Customer.objects.create(
@@ -199,9 +247,9 @@ class TestCustomerView(TestSetUp):
 
     def test_delete_customer(self):
         c = Customer.objects.create(
-            name='partial_update_customer',
-            address='partial_update_customer address',
-            email='partial_update_customer@email.com',
+            name='delete_customer',
+            address='delete_customer address',
+            email='delete_customer@email.com',
             cellphone='221133446655',
             type='Comerce',
         )
@@ -213,4 +261,6 @@ class TestCustomerView(TestSetUp):
             HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        with self.assertRaises(Customer.DoesNotExist):
+            cu = Customer.objects.get(id=c.id)
         self.assertFalse(Customer.objects.filter(id=c.id).exists())
