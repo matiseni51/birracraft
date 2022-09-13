@@ -9,3 +9,4 @@ psycopg2-binary==2.9.3
 tzdata==2022.1
 Celery[redis]
 openpyxl==3.0.10
+pytest-django==4.5.2
