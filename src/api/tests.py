@@ -5,6 +5,8 @@ from rest_framework import status
 
 from api.models import *
 
+import datetime
+
 class TestSetUp(TransactionTestCase):
     def setUp(self):
         self.register_url = '/api/user/'
@@ -36,6 +38,48 @@ class TestSetUp(TransactionTestCase):
         )
         self.access_token = res.data['access']
         self.assertEqual(res.status_code, status.HTTP_200_OK)
+    
+    def create_product(self):
+        c = Container.objects.create(
+            type='Growler',
+            liters=2,
+        )
+        f = Flavour.objects.create(
+            name='Yacare',
+            description='IPA',
+            price_per_lt=2.9,
+        )
+        p = Product.objects.create(
+            code='548',
+            container=c,
+            flavour=f,
+            arrived_date=datetime.date.today(),
+            price=6.8,
+            state='In Stock',
+        )
+        return p
+
+    def create_order(self):
+        c = Customer.objects.create(
+            name='Ken Koma',
+            address='San Martin 768',
+            email='kk@gmail.com',
+            cellphone='54372990032',
+            type='Particular',
+        )
+        p = self.create_product()
+        p2 = self.create_product()
+        o = Order.objects.create(
+            date=datetime.date.today(),
+            price=44.9,
+            delivery_cost=2.3,
+            total_amount=44.9 + 2.3,
+            customer=c,
+            state='Pending',
+            comment='randomness at its core',
+        )
+        o.products.add(p.pk, p2.pk)
+        return o
 
 class TestUserModel(TestSetUp):
     user_payload = {
@@ -112,7 +156,7 @@ class TestCustomerModel(TestSetUp):
         c.email = 'dd@gmail.com'
         c.type = 'Particular'
         c.save()
-        c =  Customer.objects.get(id=c.pk)
+        c = Customer.objects.get(id=c.pk)
         self.assertNotEqual(c.name, name)
         self.assertEqual(c.address, address)
         self.assertNotEqual(c.email, email)
@@ -121,7 +165,7 @@ class TestCustomerModel(TestSetUp):
         c.cellphone = '2234119965'
         c.address = 'Ferre 435'
         c.save(update_fields=['cellphone'])
-        c =  Customer.objects.get(id=c.pk)
+        c = Customer.objects.get(id=c.pk)
         self.assertNotEqual(c.cellphone, cellphone)
         self.assertEqual(c.address, address)
 
@@ -138,6 +182,324 @@ class TestCustomerModel(TestSetUp):
         with self.assertRaises(Customer.DoesNotExist):
             cu = Customer.objects.get(id=c.id)
         self.assertFalse(Customer.objects.filter(id=c.id).exists())
+
+
+class TestContainerModel(TestSetUp):
+    def test_create_container(self):
+        type = 'Bottle'
+        liters = '0.5'
+        c = Container.objects.create(
+            type=type,
+            liters=liters,
+        )
+        self.assertTrue(Container.objects.filter(id=c.id).exists())
+        self.assertEqual(c.type, type)
+        self.assertEqual(c.liters, liters)
+        c.delete()
+        self.assertFalse(Container.objects.filter(id=c.id).exists())
+
+    def test_update_container(self):
+        type = 'Keg'
+        liters = 50
+        c = Container.objects.create(
+            type=type,
+            liters=liters,
+        )
+        self.assertTrue(Container.objects.filter(id=c.id).exists())
+        c.type = 'Growler'
+        c.save()
+        c = Container.objects.get(id=c.pk)
+        self.assertNotEqual(c.type, type)
+        self.assertEqual(c.liters, liters)
+        c.liters = 2
+        c.save(update_fields=['liters'])
+        c = Container.objects.get(id=c.pk)
+        self.assertNotEqual(c.liters, liters)
+
+    def test_delete_container(self):
+        c = Container.objects.create(
+            type='Growler',
+            liters=2,
+        )
+        self.assertTrue(Container.objects.filter(id=c.id).exists())
+        c.delete()
+        with self.assertRaises(Container.DoesNotExist):
+            co = Container.objects.get(id=c.id)
+        self.assertFalse(Container.objects.filter(id=c.id).exists())
+
+
+class TestFlavourModel(TestSetUp):
+    def test_create_flavour(self):
+        name = 'Yacare'
+        description = 'IPA'
+        price_per_lt = 2.9
+        f = Flavour.objects.create(
+            name=name,
+            description=description,
+            price_per_lt=price_per_lt,
+        )
+        self.assertTrue(Flavour.objects.filter(id=f.id).exists())
+        self.assertEqual(f.name, name)
+        self.assertEqual(f.description, description)
+        self.assertEqual(f.price_per_lt, price_per_lt)
+        f.delete()
+        self.assertFalse(Flavour.objects.filter(id=f.id).exists())
+
+    def test_update_flavour(self):
+        name = 'Yacare'
+        description = 'IPA'
+        price_per_lt = 2.9
+        f = Flavour.objects.create(
+            name=name,
+            description=description,
+            price_per_lt=price_per_lt,
+        )
+        self.assertTrue(Flavour.objects.filter(id=f.id).exists())
+        f.name = 'Yarara'
+        f.save()
+        f = Flavour.objects.get(id=f.pk)
+        self.assertNotEqual(f.name, name)
+        self.assertEqual(f.description, description)
+        f.description = 'APA'
+        f.save(update_fields=['description'])
+        f = Flavour.objects.get(id=f.pk)
+        self.assertNotEqual(f.description, description)
+
+    def test_delete_flavour(self):
+        f = Flavour.objects.create(
+            name='Yacare',
+            description='IPA',
+            price_per_lt=2.9,
+        )
+        self.assertTrue(Flavour.objects.filter(id=f.id).exists())
+        f.delete()
+        with self.assertRaises(Flavour.DoesNotExist):
+            fl = Flavour.objects.get(id=f.id)
+        self.assertFalse(Flavour.objects.filter(id=f.id).exists())
+
+
+class TestProductModel(TestSetUp):
+    def test_create_product(self):
+        code = '548'
+        c = Container.objects.create(
+            type='Growler',
+            liters=2,
+        )
+        f = Flavour.objects.create(
+            name='Yacare',
+            description='IPA',
+            price_per_lt=2.9,
+        )
+        arrived_date = datetime.date.today()
+        price = 6.8
+        state = 'In Stock'
+        p = Product.objects.create(
+            code=code,
+            container=c,
+            flavour=f,
+            arrived_date=arrived_date,
+            price=price,
+            state=state,
+        )
+        self.assertTrue(Product.objects.filter(id=p.id).exists())
+        self.assertEqual(p.code, code)
+        self.assertEqual(p.container, c)
+        self.assertEqual(p.flavour, f)
+        p.delete()
+        self.assertFalse(Product.objects.filter(id=p.id).exists())
+
+    def test_update_product(self):
+        p = self.create_product()
+        self.assertTrue(Product.objects.filter(id=p.id).exists())
+        p.state = 'Empty'
+        p_old = Product.objects.get(id=p.pk)
+        p.save()
+        self.assertNotEqual(p.state, p_old.state)
+        self.assertEqual(p.code, p_old.code)
+        p.price = 9.8
+        p.save(update_fields=['price'])
+        self.assertNotEqual(p.price, p_old.price)
+
+    def test_delete_product(self):
+        p = self.create_product()
+        self.assertTrue(Product.objects.filter(id=p.id).exists())
+        p.delete()
+        with self.assertRaises(Product.DoesNotExist):
+            pr = Product.objects.get(id=p.id)
+        self.assertFalse(Product.objects.filter(id=p.id).exists())
+
+
+class TestOrderModel(TestSetUp):
+    def test_create_order(self):
+        date = datetime.date.today()
+        p = self.create_product()
+        price = 64.9
+        delivery_cost = 3.2
+        total_amount = price + delivery_cost
+        c = Customer.objects.create(
+            name='Ken Koma',
+            address='San Martin 768',
+            email='kk@gmail.com',
+            cellphone='54372990032',
+            type='Particular',
+        )
+        state = 'Pending'
+        comment = 'randomness at its core'
+        o = Order.objects.create(
+            date=date,
+            price=price,
+            delivery_cost=delivery_cost,
+            total_amount=total_amount,
+            customer=c,
+            state=state,
+            comment=comment,
+        )
+        o.products.add(p.pk)
+        self.assertTrue(Order.objects.filter(id=o.id).exists())
+        self.assertEqual(o.date, date)
+        self.assertEqual(o.delivery_cost, delivery_cost)
+        self.assertEqual(len(o.products.all()), 1)
+        self.assertEqual(o.products.first(), p)
+        o.delete()
+        self.assertFalse(Order.objects.filter(id=o.id).exists())
+
+    def test_update_order(self):
+        o = self.create_order()
+        self.assertTrue(Order.objects.filter(id=o.id).exists())
+        o.state = 'Paid'
+        o_old = Order.objects.get(id=o.pk)
+        o.save()
+        self.assertNotEqual(o.state, o_old.state)
+        self.assertEqual(o.price, float(o_old.price))
+        o.price = 99.8
+        o.save(update_fields=['price'])
+        self.assertNotEqual(o.price, float(o_old.price))
+
+    def test_delete_order(self):
+        o = self.create_order()
+        self.assertTrue(Order.objects.filter(id=o.id).exists())
+        o.delete()
+        with self.assertRaises(Order.DoesNotExist):
+            ord = Order.objects.get(id=o.id)
+        self.assertFalse(Order.objects.filter(id=o.id).exists())
+
+class TestPaymentModel(TestSetUp):
+    def test_create_payment(self):
+        transaction = 1
+        amount = 34.9
+        method = 'Debit Card'
+        o = self.create_order()
+        p = Payment.objects.create(
+            transaction=transaction,
+            amount=amount,
+            method=method,
+            order=o,
+        )
+        self.assertTrue(Payment.objects.filter(id=p.id).exists())
+        self.assertEqual(p.transaction, transaction)
+        self.assertEqual(p.amount, amount)
+        self.assertEqual(p.order, o)
+        p.delete()
+        self.assertFalse(Payment.objects.filter(id=o.id).exists())
+
+    def test_update_payment(self):
+        p = Payment.objects.create(
+            transaction=4,
+            amount=245.1,
+            method='Digital Wallet',
+            order=self.create_order(),
+        )
+        self.assertTrue(Payment.objects.filter(id=p.id).exists())
+        p.method = 'Cash'
+        p_old = Payment.objects.get(id=p.pk)
+        p.save()
+        self.assertNotEqual(p.method, p_old.method)
+        self.assertEqual(p.amount, float(p_old.amount))
+        p.amount = 243.1
+        p.save(update_fields=['amount'])
+        self.assertNotEqual(p.amount, float(p_old.amount))
+
+    def test_delete_order(self):
+        p = Payment.objects.create(
+            transaction=6,
+            amount=142.1,
+            method='Cryptocurrency',
+            order=self.create_order(),
+        )
+        self.assertTrue(Payment.objects.filter(id=p.id).exists())
+        p.delete()
+        with self.assertRaises(Payment.DoesNotExist):
+            pa = Payment.objects.get(id=p.id)
+        self.assertFalse(Payment.objects.filter(id=p.id).exists())
+
+
+class TestQuotaModel(TestSetUp):
+    def test_create_quota(self):
+        current_quota = 2
+        total_quota = 4
+        value = 32.1
+        date = datetime.date.today()
+        p = Payment.objects.create(
+            transaction=23,
+            amount=total_quota * value,
+            method='Credit Card',
+            order=self.create_order(),
+        )
+        q = Quota.objects.create(
+            current_quota=current_quota,
+            total_quota=total_quota,
+            value=value,
+            date=date,
+            payment=p,
+        )
+        self.assertTrue(Quota.objects.filter(id=q.id).exists())
+        self.assertEqual(q.value, value)
+        self.assertEqual(q.date, date)
+        self.assertEqual(q.total_quota, total_quota)
+        q.delete()
+        self.assertFalse(Quota.objects.filter(id=q.id).exists())
+
+    def test_update_quota(self):
+        q = Quota.objects.create(
+            current_quota=1,
+            total_quota=5,
+            value=4,
+            date=datetime.date.today(),
+            payment=Payment.objects.create(
+                transaction=653,
+                amount=20,
+                method='Credit Card',
+                order=self.create_order(),
+            ),
+        )
+        self.assertTrue(Quota.objects.filter(id=q.id).exists())
+        q.current_quota = 2
+        q_old = Quota.objects.get(id=q.pk)
+        q.save()
+        self.assertNotEqual(q.current_quota, q_old.current_quota)
+        self.assertEqual(q.value, float(q_old.value))
+        q.value = 3.5
+        q.save(update_fields=['value'])
+        self.assertNotEqual(q.value, float(q_old.value))
+
+    def test_delete_quota(self):
+        q = Quota.objects.create(
+            current_quota=5,
+            total_quota=6,
+            value=9,
+            date=datetime.date.today(),
+            payment=Payment.objects.create(
+                transaction=1205,
+                amount=54,
+                method='Credit Card',
+                order=self.create_order(),
+            ),
+        )
+        self.assertTrue(Quota.objects.filter(id=q.id).exists())
+        q.delete()
+        with self.assertRaises(Quota.DoesNotExist):
+            pa = Quota.objects.get(id=q.id)
+        self.assertFalse(Quota.objects.filter(id=q.id).exists())
 
 
 class TestCustomerView(TestSetUp):
