@@ -757,14 +757,14 @@ class TestFlavourView(TestSetUp):
             price_per_lt=2.9,
         )
         response = self.client.get(
-            self.flavour_url + f"{c.pk}/",
+            self.flavour_url + f"{f.pk}/",
             format='json',
             HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(c.name, response.data['name'])
-        self.assertEqual(c.description, response.data['description'])
-        self.assertEqual(c.price_per_lt, response.data['price_per_lt'])
+        self.assertEqual(f.name, response.data['name'])
+        self.assertEqual(f.description, response.data['description'])
+        self.assertEqual(f.price_per_lt, response.data['price_per_lt'])
 
     def test_update_flavour(self):
         f = Flavour.objects.create(
@@ -778,7 +778,7 @@ class TestFlavourView(TestSetUp):
             'price_per_lt': 3,
         }
         response = self.client.put(
-            self.flavour_url + f"{c.pk}/",
+            self.flavour_url + f"{f.pk}/",
             data=payload,
             format='json',
             content_type='application/json',
@@ -788,9 +788,9 @@ class TestFlavourView(TestSetUp):
         self.assertEqual(payload['name'], response.data['name'])
         self.assertEqual(payload['description'], response.data['description'])
         self.assertEqual(payload['price_per_lt'], response.data['price_per_lt'])
-        self.assertNotEqual(c.name, response.data['name'])
-        self.assertNotEqual(c.description, response.data['description'])
-        self.assertNotEqual(c.price_per_lt, response.data['price_per_lt'])
+        self.assertNotEqual(f.name, response.data['name'])
+        self.assertNotEqual(f.description, response.data['description'])
+        self.assertNotEqual(f.price_per_lt, response.data['price_per_lt'])
 
     def test_partial_update_flavour(self):
         f = Flavour.objects.create(
@@ -802,7 +802,7 @@ class TestFlavourView(TestSetUp):
             'name': 'Yarara',
         }
         response = self.client.patch(
-            self.flavour_url + f"{c.pk}/",
+            self.flavour_url + f"{f.pk}/",
             data=payload,
             format='json',
             content_type='application/json',
@@ -810,7 +810,7 @@ class TestFlavourView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(payload['name'], response.data['name'])
-        self.assertEqual(c.price_per_lt, response.data['price_per_lt'])
+        self.assertEqual(f.price_per_lt, response.data['price_per_lt'])
 
     def test_delete_flavour(self):
         f = Flavour.objects.create(
@@ -820,7 +820,7 @@ class TestFlavourView(TestSetUp):
         )
         self.assertTrue(Flavour.objects.filter(id=f.id).exists())
         response = self.client.delete(
-            self.flavour_url + f"{c.pk}/",
+            self.flavour_url + f"{f.pk}/",
             format='json',
             content_type='application/json',
             HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
