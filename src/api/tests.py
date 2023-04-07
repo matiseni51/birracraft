@@ -626,3 +626,206 @@ class TestCustomerView(TestSetUp):
         with self.assertRaises(Customer.DoesNotExist):
             cu = Customer.objects.get(id=c.id)
         self.assertFalse(Customer.objects.filter(id=c.id).exists())
+
+
+class TestContainerView(TestSetUp):
+    container_url = '/api/container/'
+
+    def test_list_container(self):
+        response = self.client.get(
+            self.container_url,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_container(self):
+        payload = {
+            'type': 'Keg',
+            'liters': 20,
+        }
+        response = self.client.post(
+            self.container_url,
+            data=payload,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+    
+    def test_read_container(self):
+        c = Container.objects.create(
+            type='Growler',
+            liters=2,
+        )
+        response = self.client.get(
+            self.container_url + f"{c.pk}/",
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(c.type, response.data['type'])
+        self.assertEqual(c.liters, response.data['liters'])
+
+    def test_update_container(self):
+        c = Container.objects.create(
+            type='Bottle',
+            liters=0.5,
+        )
+        payload = {
+            'type': 'Keg',
+            'liters': 50,
+        }
+        response = self.client.put(
+            self.container_url + f"{c.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['type'], response.data['type'])
+        self.assertEqual(payload['liters'], response.data['liters'])
+        self.assertNotEqual(c.type, response.data['type'])
+        self.assertNotEqual(c.liters, response.data['liters'])
+
+    def test_partial_update_container(self):
+        c = Container.objects.create(
+            type='Bottle',
+            liters=2,
+        )
+        payload = {
+            'type': 'Growler',
+        }
+        response = self.client.patch(
+            self.container_url + f"{c.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['type'], response.data['type'])
+        self.assertEqual(c.liters, response.data['liters'])
+
+    def test_delete_container(self):
+        c = Container.objects.create(
+            type='Bottle',
+            liters=1,
+        )
+        self.assertTrue(Container.objects.filter(id=c.id).exists())
+        response = self.client.delete(
+            self.container_url + f"{c.pk}/",
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        with self.assertRaises(Container.DoesNotExist):
+            cu = Container.objects.get(id=c.id)
+        self.assertFalse(Container.objects.filter(id=c.id).exists())
+
+
+class TestFlavourView(TestSetUp):
+    flavour_url = '/api/flavour/'
+
+    def test_list_flavour(self):
+        response = self.client.get(
+            self.flavour_url,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_flavour(self):
+        payload = {
+            'name': 'Yatay',
+            'description': 'IPA test',
+            'price_per_lt': 3.43,
+        }
+        response = self.client.post(
+            self.flavour_url,
+            data=payload,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_read_flavour(self):
+        f = Flavour.objects.create(
+            name='Yacare',
+            description='IPA',
+            price_per_lt=2.9,
+        )
+        response = self.client.get(
+            self.flavour_url + f"{c.pk}/",
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(c.name, response.data['name'])
+        self.assertEqual(c.description, response.data['description'])
+        self.assertEqual(c.price_per_lt, response.data['price_per_lt'])
+
+    def test_update_flavour(self):
+        f = Flavour.objects.create(
+            name='Yacare',
+            description='IPA',
+            price_per_lt=2.9,
+        )
+        payload = {
+            'name': 'Yarara',
+            'description': 'IPA test',
+            'price_per_lt': 3,
+        }
+        response = self.client.put(
+            self.flavour_url + f"{c.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['name'], response.data['name'])
+        self.assertEqual(payload['description'], response.data['description'])
+        self.assertEqual(payload['price_per_lt'], response.data['price_per_lt'])
+        self.assertNotEqual(c.name, response.data['name'])
+        self.assertNotEqual(c.description, response.data['description'])
+        self.assertNotEqual(c.price_per_lt, response.data['price_per_lt'])
+
+    def test_partial_update_flavour(self):
+        f = Flavour.objects.create(
+            name='Yacare',
+            description='IPA',
+            price_per_lt=2.9,
+        )
+        payload = {
+            'name': 'Yarara',
+        }
+        response = self.client.patch(
+            self.flavour_url + f"{c.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['name'], response.data['name'])
+        self.assertEqual(c.price_per_lt, response.data['price_per_lt'])
+
+    def test_delete_flavour(self):
+        f = Flavour.objects.create(
+            name='Yacare',
+            description='IPA',
+            price_per_lt=2.9,
+        )
+        self.assertTrue(Flavour.objects.filter(id=f.id).exists())
+        response = self.client.delete(
+            self.flavour_url + f"{c.pk}/",
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        with self.assertRaises(Flavour.DoesNotExist):
+            fl = Flavour.objects.get(id=f.id)
+        self.assertFalse(Flavour.objects.filter(id=f.id).exists())
