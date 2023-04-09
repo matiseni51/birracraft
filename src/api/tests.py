@@ -935,7 +935,7 @@ class TestProductView(TestSetUp):
 
 
 class TestOrderView(TestSetUp):
-    product_url = '/api/order/'
+    order_url = '/api/order/'
 
     def test_list_order(self):
         response = self.client.get(
@@ -1040,3 +1040,112 @@ class TestOrderView(TestSetUp):
         with self.assertRaises(Order.DoesNotExist):
             or = Order.objects.get(id=o.id)
         self.assertFalse(Order.objects.filter(id=o.id).exists())
+
+class TestPaymentView(TestSetUp):
+    payment_url = '/api/payment/'
+
+    def test_list_payment(self):
+        response = self.client.get(
+            self.payment_url,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_payment(self):
+        o = self.create_order()
+        payload = {
+            'amount': 397,
+            'method': 'Digital Wallet',
+            'order': o.pk,
+        }
+        response = self.client.post(
+            self.payment_url,
+            data=payload,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_read_payment(self):
+        p = Payment.objects.create(
+            transaction=6,
+            amount=249.3,
+            method='Cryptocurrency',
+            order=self.create_order(),
+        )
+        response = self.client.get(
+            self.payment_url + f"{p.pk}/",
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(p.transaction, response.data['transaction'])
+        self.assertEqual(p.amount, response.data['amount'])
+        self.assertEqual(p.method, response.data['method'])
+
+    def test_update_payment(self):
+        p = Payment.objects.create(
+            transaction=6,
+            amount=14.1,
+            method='Cryptocurrency',
+            order=self.create_order(),
+        )
+        o = self.create_order()
+        payload = {
+            'amount': 67,
+            'method': 'Cash',
+            'order': o.pk,
+        }
+        response = self.client.put(
+            self.payment_url + f"{p.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['amount'], response.data['amount'])
+        self.assertEqual(payload['method'], response.data['method'])
+        self.assertNotEqual(p.amount, response.data['amount'])
+        self.assertNotEqual(p.method, response.data['method'])
+
+    def test_partial_update_payment(self):
+        p = Payment.objects.create(
+            transaction=26,
+            amount=77.2,
+            method='Debit Card',
+            order=self.create_order(),
+        )
+        payload = {
+            'amount': 307.8,
+        }
+        response = self.client.patch(
+            self.payment_url + f"{p.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['amount'], response.data['amount'])
+        self.assertEqual(p.method, response.data['method'])
+
+    def test_delete_payment(self):
+        p = Payment.objects.create(
+            transaction=916,
+            amount=506.6,
+            method='Creadit Card',
+            order=self.create_order(),
+        )
+        self.assertTrue(Payment.objects.filter(id=p.id).exists())
+        response = self.client.delete(
+            self.payment_url + f"{p.pk}/",
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        with self.assertRaises(Payment.DoesNotExist):
+            pa = Payment.objects.get(id=p.id)
+        self.assertFalse(Payment.objects.filter(id=p.id).exists())
