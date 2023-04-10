@@ -1041,6 +1041,7 @@ class TestOrderView(TestSetUp):
             or = Order.objects.get(id=o.id)
         self.assertFalse(Order.objects.filter(id=o.id).exists())
 
+
 class TestPaymentView(TestSetUp):
     payment_url = '/api/payment/'
 
@@ -1135,7 +1136,7 @@ class TestPaymentView(TestSetUp):
         p = Payment.objects.create(
             transaction=916,
             amount=506.6,
-            method='Creadit Card',
+            method='Credit Card',
             order=self.create_order(),
         )
         self.assertTrue(Payment.objects.filter(id=p.id).exists())
@@ -1149,3 +1150,146 @@ class TestPaymentView(TestSetUp):
         with self.assertRaises(Payment.DoesNotExist):
             pa = Payment.objects.get(id=p.id)
         self.assertFalse(Payment.objects.filter(id=p.id).exists())
+
+
+class TestQuotaView(TestSetUp):
+    quota_url = '/api/quota/'
+
+    def test_list_quota(self):
+        response = self.client.get(
+            self.quota_url,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_quota(self):
+        p = Payment.objects.create(
+            transaction=916,
+            amount=506.6,
+            method='Credit Card',
+            order=self.create_order(),
+        )
+        payload = {
+            'current_quota': 3,
+            'total_quota': 5,
+            'value': 2.2,
+            'date': datetime.date.today(),
+            'payment': p.pk,
+        }
+        response = self.client.post(
+            self.quota_url,
+            data=payload,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_read_quota(self):
+        p = Payment.objects.create(
+            transaction=6,
+            amount=249.3,
+            method='Cryptocurrency',
+            order=self.create_order(),
+        )
+        q = Quota.objects.create(
+            current_quota=1,
+            total_quota=5,
+            value=3.2,
+            date=datetime.date.today(),
+            payment=p,
+        )
+        response = self.client.get(
+            self.quota_url + f"{q.pk}/",
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(q.current_quota, response.data['current_quota'])
+        self.assertEqual(q.total_amount, response.data['total_quota'])
+        self.assertEqual(q.value, response.data['value'])
+
+    def test_update_quota(self):
+        p = Payment.objects.create(
+            transaction=6,
+            amount=249.3,
+            method='Cryptocurrency',
+            order=self.create_order(),
+        )
+        q = Quota.objects.create(
+            current_quota=1,
+            total_quota=5,
+            value=3.2,
+            date=datetime.date.today(),
+            payment=p,
+        )
+        payload = {
+            'current_quota': 3,
+            'total_quota': 3,
+            'value': 4.6,
+        }
+        response = self.client.put(
+            self.quota_url + f"{q.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['current_quota'], response.data['current_quota'])
+        self.assertEqual(payload['total_quota'], response.data['total_quota'])
+        self.assertNotEqual(q.value, response.data['value'])
+
+    def test_partial_update_quota(self):
+        p = Payment.objects.create(
+            transaction=6,
+            amount=249.3,
+            method='Cryptocurrency',
+            order=self.create_order(),
+        )
+        q = Quota.objects.create(
+            current_quota=1,
+            total_quota=5,
+            value=3.2,
+            date=datetime.date.today(),
+            payment=p,
+        )
+        payload = {
+            'current_quota': 2,
+        }
+        response = self.client.patch(
+            self.quota_url + f"{q.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['current_quota'], response.data['current_quota'])
+        self.assertEqual(q.total_quota, response.data['total_quota'])
+
+    def test_delete_quota(self):
+        p = Payment.objects.create(
+            transaction=6,
+            amount=249.3,
+            method='Cryptocurrency',
+            order=self.create_order(),
+        )
+        q = Quota.objects.create(
+            current_quota=1,
+            total_quota=5,
+            value=3.2,
+            date=datetime.date.today(),
+            payment=p,
+        )
+        self.assertTrue(Quota.objects.filter(id=q.id).exists())
+        response = self.client.delete(
+            self.quota_url + f"{q.pk}/",
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        with self.assertRaises(Quota.DoesNotExist):
+            qu = Quota.objects.get(id=q.id)
+        self.assertFalse(Quota.objects.filter(id=q.id).exists())
