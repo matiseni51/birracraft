@@ -626,3 +626,670 @@ class TestCustomerView(TestSetUp):
         with self.assertRaises(Customer.DoesNotExist):
             cu = Customer.objects.get(id=c.id)
         self.assertFalse(Customer.objects.filter(id=c.id).exists())
+
+
+class TestContainerView(TestSetUp):
+    container_url = '/api/container/'
+
+    def test_list_container(self):
+        response = self.client.get(
+            self.container_url,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_container(self):
+        payload = {
+            'type': 'Keg',
+            'liters': 20,
+        }
+        response = self.client.post(
+            self.container_url,
+            data=payload,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+    
+    def test_read_container(self):
+        c = Container.objects.create(
+            type='Growler',
+            liters=2,
+        )
+        response = self.client.get(
+            self.container_url + f"{c.pk}/",
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(c.type, response.data['type'])
+        self.assertEqual(c.liters, response.data['liters'])
+
+    def test_update_container(self):
+        c = Container.objects.create(
+            type='Bottle',
+            liters=0.5,
+        )
+        payload = {
+            'type': 'Keg',
+            'liters': 50,
+        }
+        response = self.client.put(
+            self.container_url + f"{c.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['type'], response.data['type'])
+        self.assertEqual(payload['liters'], response.data['liters'])
+        self.assertNotEqual(c.type, response.data['type'])
+        self.assertNotEqual(c.liters, response.data['liters'])
+
+    def test_partial_update_container(self):
+        c = Container.objects.create(
+            type='Bottle',
+            liters=2,
+        )
+        payload = {
+            'type': 'Growler',
+        }
+        response = self.client.patch(
+            self.container_url + f"{c.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['type'], response.data['type'])
+        self.assertEqual(c.liters, response.data['liters'])
+
+    def test_delete_container(self):
+        c = Container.objects.create(
+            type='Bottle',
+            liters=1,
+        )
+        self.assertTrue(Container.objects.filter(id=c.id).exists())
+        response = self.client.delete(
+            self.container_url + f"{c.pk}/",
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        with self.assertRaises(Container.DoesNotExist):
+            cu = Container.objects.get(id=c.id)
+        self.assertFalse(Container.objects.filter(id=c.id).exists())
+
+
+class TestFlavourView(TestSetUp):
+    flavour_url = '/api/flavour/'
+
+    def test_list_flavour(self):
+        response = self.client.get(
+            self.flavour_url,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_flavour(self):
+        payload = {
+            'name': 'Yatay',
+            'description': 'IPA test',
+            'price_per_lt': 3.43,
+        }
+        response = self.client.post(
+            self.flavour_url,
+            data=payload,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_read_flavour(self):
+        f = Flavour.objects.create(
+            name='Yacare',
+            description='IPA',
+            price_per_lt=2.9,
+        )
+        response = self.client.get(
+            self.flavour_url + f"{f.pk}/",
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(f.name, response.data['name'])
+        self.assertEqual(f.description, response.data['description'])
+        self.assertEqual(f.price_per_lt, response.data['price_per_lt'])
+
+    def test_update_flavour(self):
+        f = Flavour.objects.create(
+            name='Yacare',
+            description='IPA',
+            price_per_lt=2.9,
+        )
+        payload = {
+            'name': 'Yarara',
+            'description': 'IPA test',
+            'price_per_lt': 3,
+        }
+        response = self.client.put(
+            self.flavour_url + f"{f.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['name'], response.data['name'])
+        self.assertEqual(payload['description'], response.data['description'])
+        self.assertEqual(payload['price_per_lt'], response.data['price_per_lt'])
+        self.assertNotEqual(f.name, response.data['name'])
+        self.assertNotEqual(f.description, response.data['description'])
+        self.assertNotEqual(f.price_per_lt, response.data['price_per_lt'])
+
+    def test_partial_update_flavour(self):
+        f = Flavour.objects.create(
+            name='Yacare',
+            description='IPA',
+            price_per_lt=2.9,
+        )
+        payload = {
+            'name': 'Yarara',
+        }
+        response = self.client.patch(
+            self.flavour_url + f"{f.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['name'], response.data['name'])
+        self.assertEqual(f.price_per_lt, response.data['price_per_lt'])
+
+    def test_delete_flavour(self):
+        f = Flavour.objects.create(
+            name='Yacare',
+            description='IPA',
+            price_per_lt=2.9,
+        )
+        self.assertTrue(Flavour.objects.filter(id=f.id).exists())
+        response = self.client.delete(
+            self.flavour_url + f"{f.pk}/",
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        with self.assertRaises(Flavour.DoesNotExist):
+            fl = Flavour.objects.get(id=f.id)
+        self.assertFalse(Flavour.objects.filter(id=f.id).exists())
+
+
+class TestProductView(TestSetUp):
+    product_url = '/api/product/'
+
+    def test_list_product(self):
+        response = self.client.get(
+            self.product_url,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_product(self):
+        c = Container.objects.create(
+            type='Growler',
+            liters=2,
+        )
+        f = Flavour.objects.create(
+            name='Yacare',
+            description='IPA',
+            price_per_lt=2.9,
+        )
+        payload = {
+            'code': '697',
+            'container': c.pk,
+            'flavour': f.pk,
+            'arrived_date': datetime.date.today(),
+            'price': (c.liters * f.price_per_lt).toFixed(2),
+            'state': 'In Stock',
+        }
+        response = self.client.post(
+            self.product_url,
+            data=payload,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_read_product(self):
+        p = self.create_product()
+        response = self.client.get(
+            self.product_url + f"{p.pk}/",
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(p.code, response.data['code'])
+        self.assertEqual(p.arrived_date, response.data['arrived_date'])
+        self.assertEqual(p.price, response.data['price'])
+        self.assertEqual(p.state, response.data['state'])
+
+    def test_update_product(self):
+        p = self.create_product()
+        payload = {
+            'code': '928',
+            'price': 9.8,
+            'state': 'In Transit',
+        }
+        response = self.client.put(
+            self.product_url + f"{p.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['code'], response.data['code'])
+        self.assertEqual(payload['price'], response.data['price'])
+        self.assertEqual(payload['state'], response.data['state'])
+        self.assertNotEqual(p.code, response.data['code'])
+        self.assertNotEqual(p.price, response.data['price'])
+        self.assertNotEqual(p.state, response.data['state'])
+
+    def test_partial_update_product(self):
+        p = self.create_product()
+        payload = {
+            'state': 'Empty',
+        }
+        response = self.client.patch(
+            self.product_url + f"{p.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['state'], response.data['state'])
+        self.assertEqual(p.price, response.data['price'])
+
+    def test_delete_product(self):
+        p = self.create_product()
+        self.assertTrue(Product.objects.filter(id=p.id).exists())
+        response = self.client.delete(
+            self.product_url + f"{p.pk}/",
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        with self.assertRaises(Product.DoesNotExist):
+            pr = Product.objects.get(id=p.id)
+        self.assertFalse(Product.objects.filter(id=p.id).exists())
+
+
+class TestOrderView(TestSetUp):
+    order_url = '/api/order/'
+
+    def test_list_order(self):
+        response = self.client.get(
+            self.order_url,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_order(self):
+        c = Customer.objects.create(
+            name='Michael Martin',
+            address='San Lorenzo 768',
+            email='mm@gmail.com',
+            cellphone='54372493223',
+            type='Particular',
+        )
+        p = self.create_product()
+        payload = {
+            'date': datetime.date.today(),
+            'products': [p.pk],
+            'price': 11.3,
+            'delivery_cost': 1.2,
+            'total_amount': 12.5,
+            'customer': c.pk,
+            'state': 'Pending',
+            'comment': 'random stuff for view test',
+        }
+        response = self.client.post(
+            self.order_url,
+            data=payload,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_read_order(self):
+        o = self.create_order()
+        response = self.client.get(
+            self.order_url + f"{o.pk}/",
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(o.date, response.data['date'])
+        self.assertEqual(o.price, response.data['price'])
+        self.assertEqual(o.delivery_cost, response.data['delivery_cost'])
+        self.assertEqual(o.customer, response.data['customer'])
+        self.assertEqual(o.state, response.data['state'])
+        self.assertEqual(o.comment, response.data['comment'])
+
+    def test_update_order(self):
+        o = self.create_order()
+        payload = {
+            'price': 9.8,
+            'delivery_cost': 0.3,
+            'total_amount': 10.1,
+            'state': 'Paid',
+            'comment': 'updating fields with update view',
+        }
+        response = self.client.put(
+            self.order_url + f"{o.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['price'], response.data['price'])
+        self.assertEqual(payload['delivery_cost'], response.data['delivery_cost'])
+        self.assertEqual(payload['total_amount'], response.data['total_amount'])
+        self.assertNotEqual(o.price, response.data['price'])
+        self.assertNotEqual(o.delivery_cost, response.data['delivery_cost'])
+        self.assertNotEqual(o.total_amount, response.data['total_amount'])
+
+    def test_partial_update_order(self):
+        o = self.create_order()
+        payload = {
+            'state': 'Paid',
+        }
+        response = self.client.patch(
+            self.order_url + f"{o.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['state'], response.data['state'])
+        self.assertEqual(o.price, response.data['price'])
+
+    def test_delete_order(self):
+        o = self.create_order()
+        self.assertTrue(Order.objects.filter(id=o.id).exists())
+        response = self.client.delete(
+            self.order_url + f"{o.pk}/",
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        with self.assertRaises(Order.DoesNotExist):
+            or = Order.objects.get(id=o.id)
+        self.assertFalse(Order.objects.filter(id=o.id).exists())
+
+
+class TestPaymentView(TestSetUp):
+    payment_url = '/api/payment/'
+
+    def test_list_payment(self):
+        response = self.client.get(
+            self.payment_url,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_payment(self):
+        o = self.create_order()
+        payload = {
+            'amount': 397,
+            'method': 'Digital Wallet',
+            'order': o.pk,
+        }
+        response = self.client.post(
+            self.payment_url,
+            data=payload,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_read_payment(self):
+        p = Payment.objects.create(
+            transaction=6,
+            amount=249.3,
+            method='Cryptocurrency',
+            order=self.create_order(),
+        )
+        response = self.client.get(
+            self.payment_url + f"{p.pk}/",
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(p.transaction, response.data['transaction'])
+        self.assertEqual(p.amount, response.data['amount'])
+        self.assertEqual(p.method, response.data['method'])
+
+    def test_update_payment(self):
+        p = Payment.objects.create(
+            transaction=6,
+            amount=14.1,
+            method='Cryptocurrency',
+            order=self.create_order(),
+        )
+        o = self.create_order()
+        payload = {
+            'amount': 67,
+            'method': 'Cash',
+            'order': o.pk,
+        }
+        response = self.client.put(
+            self.payment_url + f"{p.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['amount'], response.data['amount'])
+        self.assertEqual(payload['method'], response.data['method'])
+        self.assertNotEqual(p.amount, response.data['amount'])
+        self.assertNotEqual(p.method, response.data['method'])
+
+    def test_partial_update_payment(self):
+        p = Payment.objects.create(
+            transaction=26,
+            amount=77.2,
+            method='Debit Card',
+            order=self.create_order(),
+        )
+        payload = {
+            'amount': 307.8,
+        }
+        response = self.client.patch(
+            self.payment_url + f"{p.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['amount'], response.data['amount'])
+        self.assertEqual(p.method, response.data['method'])
+
+    def test_delete_payment(self):
+        p = Payment.objects.create(
+            transaction=916,
+            amount=506.6,
+            method='Credit Card',
+            order=self.create_order(),
+        )
+        self.assertTrue(Payment.objects.filter(id=p.id).exists())
+        response = self.client.delete(
+            self.payment_url + f"{p.pk}/",
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        with self.assertRaises(Payment.DoesNotExist):
+            pa = Payment.objects.get(id=p.id)
+        self.assertFalse(Payment.objects.filter(id=p.id).exists())
+
+
+class TestQuotaView(TestSetUp):
+    quota_url = '/api/quota/'
+
+    def test_list_quota(self):
+        response = self.client.get(
+            self.quota_url,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_quota(self):
+        p = Payment.objects.create(
+            transaction=916,
+            amount=506.6,
+            method='Credit Card',
+            order=self.create_order(),
+        )
+        payload = {
+            'current_quota': 3,
+            'total_quota': 5,
+            'value': 2.2,
+            'date': datetime.date.today(),
+            'payment': p.pk,
+        }
+        response = self.client.post(
+            self.quota_url,
+            data=payload,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_read_quota(self):
+        p = Payment.objects.create(
+            transaction=6,
+            amount=249.3,
+            method='Cryptocurrency',
+            order=self.create_order(),
+        )
+        q = Quota.objects.create(
+            current_quota=1,
+            total_quota=5,
+            value=3.2,
+            date=datetime.date.today(),
+            payment=p,
+        )
+        response = self.client.get(
+            self.quota_url + f"{q.pk}/",
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(q.current_quota, response.data['current_quota'])
+        self.assertEqual(q.total_amount, response.data['total_quota'])
+        self.assertEqual(q.value, response.data['value'])
+
+    def test_update_quota(self):
+        p = Payment.objects.create(
+            transaction=6,
+            amount=249.3,
+            method='Cryptocurrency',
+            order=self.create_order(),
+        )
+        q = Quota.objects.create(
+            current_quota=1,
+            total_quota=5,
+            value=3.2,
+            date=datetime.date.today(),
+            payment=p,
+        )
+        payload = {
+            'current_quota': 3,
+            'total_quota': 3,
+            'value': 4.6,
+        }
+        response = self.client.put(
+            self.quota_url + f"{q.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['current_quota'], response.data['current_quota'])
+        self.assertEqual(payload['total_quota'], response.data['total_quota'])
+        self.assertNotEqual(q.value, response.data['value'])
+
+    def test_partial_update_quota(self):
+        p = Payment.objects.create(
+            transaction=6,
+            amount=249.3,
+            method='Cryptocurrency',
+            order=self.create_order(),
+        )
+        q = Quota.objects.create(
+            current_quota=1,
+            total_quota=5,
+            value=3.2,
+            date=datetime.date.today(),
+            payment=p,
+        )
+        payload = {
+            'current_quota': 2,
+        }
+        response = self.client.patch(
+            self.quota_url + f"{q.pk}/",
+            data=payload,
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payload['current_quota'], response.data['current_quota'])
+        self.assertEqual(q.total_quota, response.data['total_quota'])
+
+    def test_delete_quota(self):
+        p = Payment.objects.create(
+            transaction=6,
+            amount=249.3,
+            method='Cryptocurrency',
+            order=self.create_order(),
+        )
+        q = Quota.objects.create(
+            current_quota=1,
+            total_quota=5,
+            value=3.2,
+            date=datetime.date.today(),
+            payment=p,
+        )
+        self.assertTrue(Quota.objects.filter(id=q.id).exists())
+        response = self.client.delete(
+            self.quota_url + f"{q.pk}/",
+            format='json',
+            content_type='application/json',
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        with self.assertRaises(Quota.DoesNotExist):
+            qu = Quota.objects.get(id=q.id)
+        self.assertFalse(Quota.objects.filter(id=q.id).exists())
