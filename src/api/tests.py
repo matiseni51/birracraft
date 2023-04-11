@@ -54,7 +54,7 @@ class TestSetUp(TransactionTestCase):
             container=c,
             flavour=f,
             arrived_date=datetime.date.today(),
-            price=6.8,
+            price=6.80,
             state='In Stock',
         )
         return p
@@ -664,7 +664,7 @@ class TestContainerView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(c.type, response.data['type'])
-        self.assertEqual(c.liters, response.data['liters'])
+        self.assertEqual(c.liters, float(response.data['liters']))
 
     def test_update_container(self):
         c = Container.objects.create(
@@ -684,9 +684,9 @@ class TestContainerView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(payload['type'], response.data['type'])
-        self.assertEqual(payload['liters'], response.data['liters'])
+        self.assertEqual(payload['liters'], float(response.data['liters']))
         self.assertNotEqual(c.type, response.data['type'])
-        self.assertNotEqual(c.liters, response.data['liters'])
+        self.assertNotEqual(c.liters, float(response.data['liters']))
 
     def test_partial_update_container(self):
         c = Container.objects.create(
@@ -705,7 +705,7 @@ class TestContainerView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(payload['type'], response.data['type'])
-        self.assertEqual(c.liters, response.data['liters'])
+        self.assertEqual(c.liters, float(response.data['liters']))
 
     def test_delete_container(self):
         c = Container.objects.create(
@@ -764,7 +764,7 @@ class TestFlavourView(TestSetUp):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(f.name, response.data['name'])
         self.assertEqual(f.description, response.data['description'])
-        self.assertEqual(f.price_per_lt, response.data['price_per_lt'])
+        self.assertEqual(f.price_per_lt, float(response.data['price_per_lt']))
 
     def test_update_flavour(self):
         f = Flavour.objects.create(
@@ -787,10 +787,10 @@ class TestFlavourView(TestSetUp):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(payload['name'], response.data['name'])
         self.assertEqual(payload['description'], response.data['description'])
-        self.assertEqual(payload['price_per_lt'], response.data['price_per_lt'])
+        self.assertEqual(payload['price_per_lt'], float(response.data['price_per_lt']))
         self.assertNotEqual(f.name, response.data['name'])
         self.assertNotEqual(f.description, response.data['description'])
-        self.assertNotEqual(f.price_per_lt, response.data['price_per_lt'])
+        self.assertNotEqual(f.price_per_lt, float(response.data['price_per_lt']))
 
     def test_partial_update_flavour(self):
         f = Flavour.objects.create(
@@ -810,7 +810,7 @@ class TestFlavourView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(payload['name'], response.data['name'])
-        self.assertEqual(f.price_per_lt, response.data['price_per_lt'])
+        self.assertEqual(f.price_per_lt, float(response.data['price_per_lt']))
 
     def test_delete_flavour(self):
         f = Flavour.objects.create(
@@ -857,7 +857,7 @@ class TestProductView(TestSetUp):
             'container': c.pk,
             'flavour': f.pk,
             'arrived_date': datetime.date.today(),
-            'price': (c.liters * f.price_per_lt).toFixed(2),
+            'price': round((c.liters * f.price_per_lt), 2),
             'state': 'In Stock',
         }
         response = self.client.post(
@@ -877,8 +877,8 @@ class TestProductView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(p.code, response.data['code'])
-        self.assertEqual(p.arrived_date, response.data['arrived_date'])
-        self.assertEqual(p.price, response.data['price'])
+        self.assertEqual(p.arrived_date.strftime('%Y-%m-%d'), response.data['arrived_date'])
+        self.assertEqual(p.price, float(response.data['price']))
         self.assertEqual(p.state, response.data['state'])
 
     def test_update_product(self):
@@ -897,10 +897,10 @@ class TestProductView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(payload['code'], response.data['code'])
-        self.assertEqual(payload['price'], response.data['price'])
+        self.assertEqual(payload['price'], float(response.data['price']))
         self.assertEqual(payload['state'], response.data['state'])
         self.assertNotEqual(p.code, response.data['code'])
-        self.assertNotEqual(p.price, response.data['price'])
+        self.assertNotEqual(p.price, float(response.data['price']))
         self.assertNotEqual(p.state, response.data['state'])
 
     def test_partial_update_product(self):
@@ -917,7 +917,7 @@ class TestProductView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(payload['state'], response.data['state'])
-        self.assertEqual(p.price, response.data['price'])
+        self.assertEqual(p.price, float(response.data['price']))
 
     def test_delete_product(self):
         p = self.create_product()
@@ -980,10 +980,10 @@ class TestOrderView(TestSetUp):
             HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(o.date, response.data['date'])
-        self.assertEqual(o.price, response.data['price'])
-        self.assertEqual(o.delivery_cost, response.data['delivery_cost'])
-        self.assertEqual(o.customer, response.data['customer'])
+        self.assertEqual(o.date.strftime('%Y-%m-%d'), response.data['date'])
+        self.assertEqual(o.price, float(response.data['price']))
+        self.assertEqual(o.delivery_cost, float(response.data['delivery_cost']))
+        self.assertEqual(o.customer.name, response.data['customer'])
         self.assertEqual(o.state, response.data['state'])
         self.assertEqual(o.comment, response.data['comment'])
 
@@ -1025,7 +1025,7 @@ class TestOrderView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(payload['state'], response.data['state'])
-        self.assertEqual(o.price, response.data['price'])
+        self.assertEqual(o.price, float(response.data['price']))
 
     def test_delete_order(self):
         o = self.create_order()
@@ -1038,7 +1038,7 @@ class TestOrderView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         with self.assertRaises(Order.DoesNotExist):
-            or = Order.objects.get(id=o.id)
+            ord = Order.objects.get(id=o.id)
         self.assertFalse(Order.objects.filter(id=o.id).exists())
 
 
@@ -1082,7 +1082,7 @@ class TestPaymentView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(p.transaction, response.data['transaction'])
-        self.assertEqual(p.amount, response.data['amount'])
+        self.assertEqual(p.amount, float(response.data['amount']))
         self.assertEqual(p.method, response.data['method'])
 
     def test_update_payment(self):
@@ -1106,9 +1106,9 @@ class TestPaymentView(TestSetUp):
             HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(payload['amount'], response.data['amount'])
+        self.assertEqual(payload['amount'], float(response.data['amount']))
         self.assertEqual(payload['method'], response.data['method'])
-        self.assertNotEqual(p.amount, response.data['amount'])
+        self.assertNotEqual(p.amount, float(response.data['amount']))
         self.assertNotEqual(p.method, response.data['method'])
 
     def test_partial_update_payment(self):
@@ -1129,7 +1129,7 @@ class TestPaymentView(TestSetUp):
             HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(payload['amount'], response.data['amount'])
+        self.assertEqual(payload['amount'], float(response.data['amount']))
         self.assertEqual(p.method, response.data['method'])
 
     def test_delete_payment(self):
@@ -1206,8 +1206,8 @@ class TestQuotaView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(q.current_quota, response.data['current_quota'])
-        self.assertEqual(q.total_amount, response.data['total_quota'])
-        self.assertEqual(q.value, response.data['value'])
+        self.assertEqual(q.total_quota, response.data['total_quota'])
+        self.assertEqual(q.value, float(response.data['value']))
 
     def test_update_quota(self):
         p = Payment.objects.create(
