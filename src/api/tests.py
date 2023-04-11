@@ -5,7 +5,7 @@ from rest_framework import status
 
 from api.models import *
 
-import datetime
+from datetime import date, timedelta
 
 class TestSetUp(TransactionTestCase):
     def setUp(self):
@@ -53,7 +53,7 @@ class TestSetUp(TransactionTestCase):
             code='548',
             container=c,
             flavour=f,
-            arrived_date=datetime.date.today(),
+            arrived_date=date.today(),
             price=6.80,
             state='In Stock',
         )
@@ -70,7 +70,7 @@ class TestSetUp(TransactionTestCase):
         p = self.create_product()
         p2 = self.create_product()
         o = Order.objects.create(
-            date=datetime.date.today(),
+            date=date.today(),
             price=44.9,
             delivery_cost=2.3,
             total_amount=44.9 + 2.3,
@@ -290,7 +290,7 @@ class TestProductModel(TestSetUp):
             description='IPA',
             price_per_lt=2.9,
         )
-        arrived_date = datetime.date.today()
+        arrived_date = date.today()
         price = 6.8
         state = 'In Stock'
         p = Product.objects.create(
@@ -331,7 +331,7 @@ class TestProductModel(TestSetUp):
 
 class TestOrderModel(TestSetUp):
     def test_create_order(self):
-        date = datetime.date.today()
+        o_date = date.today()
         p = self.create_product()
         price = 64.9
         delivery_cost = 3.2
@@ -346,7 +346,7 @@ class TestOrderModel(TestSetUp):
         state = 'Pending'
         comment = 'randomness at its core'
         o = Order.objects.create(
-            date=date,
+            date=o_date,
             price=price,
             delivery_cost=delivery_cost,
             total_amount=total_amount,
@@ -356,7 +356,7 @@ class TestOrderModel(TestSetUp):
         )
         o.products.add(p.pk)
         self.assertTrue(Order.objects.filter(id=o.id).exists())
-        self.assertEqual(o.date, date)
+        self.assertEqual(o.date, o_date)
         self.assertEqual(o.delivery_cost, delivery_cost)
         self.assertEqual(len(o.products.all()), 1)
         self.assertEqual(o.products.first(), p)
@@ -438,7 +438,7 @@ class TestQuotaModel(TestSetUp):
         current_quota = 2
         total_quota = 4
         value = 32.1
-        date = datetime.date.today()
+        q_date = date.today()
         p = Payment.objects.create(
             transaction=23,
             amount=total_quota * value,
@@ -449,12 +449,12 @@ class TestQuotaModel(TestSetUp):
             current_quota=current_quota,
             total_quota=total_quota,
             value=value,
-            date=date,
+            date=q_date,
             payment=p,
         )
         self.assertTrue(Quota.objects.filter(id=q.id).exists())
         self.assertEqual(q.value, value)
-        self.assertEqual(q.date, date)
+        self.assertEqual(q.date, q_date)
         self.assertEqual(q.total_quota, total_quota)
         q.delete()
         self.assertFalse(Quota.objects.filter(id=q.id).exists())
@@ -464,7 +464,7 @@ class TestQuotaModel(TestSetUp):
             current_quota=1,
             total_quota=5,
             value=4,
-            date=datetime.date.today(),
+            date=date.today(),
             payment=Payment.objects.create(
                 transaction=653,
                 amount=20,
@@ -487,7 +487,7 @@ class TestQuotaModel(TestSetUp):
             current_quota=5,
             total_quota=6,
             value=9,
-            date=datetime.date.today(),
+            date=date.today(),
             payment=Payment.objects.create(
                 transaction=1205,
                 amount=54,
@@ -856,7 +856,7 @@ class TestProductView(TestSetUp):
             'code': '697',
             'container': c.pk,
             'flavour': f.pk,
-            'arrived_date': datetime.date.today(),
+            'arrived_date': date.today(),
             'price': round((c.liters * f.price_per_lt), 2),
             'state': 'In Stock',
         }
@@ -883,8 +883,20 @@ class TestProductView(TestSetUp):
 
     def test_update_product(self):
         p = self.create_product()
+        c = Container.objects.create(
+            type='Growler',
+            liters=2,
+        )
+        f = Flavour.objects.create(
+            name='Yacare',
+            description='IPA',
+            price_per_lt=2.9,
+        )
         payload = {
             'code': '928',
+            'container': c.pk,
+            'flavour': f.pk,
+            'arrived_date': date.today() - timedelta(days=5),
             'price': 9.8,
             'state': 'In Transit',
         }
@@ -955,7 +967,7 @@ class TestOrderView(TestSetUp):
         )
         p = self.create_product()
         payload = {
-            'date': datetime.date.today(),
+            'date': date.today(),
             'products': [p.pk],
             'price': 11.3,
             'delivery_cost': 1.2,
@@ -989,7 +1001,18 @@ class TestOrderView(TestSetUp):
 
     def test_update_order(self):
         o = self.create_order()
+        p = self.create_product()
+        c = Customer.objects.create(
+            name='Liam Lorenzo',
+            address='Artigas 1451',
+            email='ll@gmail.com',
+            cellphone='54379483522',
+            type='Particular',
+        )
         payload = {
+            'date': date.today() - timedelta(days=1),
+            'products': [p.pk],
+            'customer': c.pk,
             'price': 9.8,
             'delivery_cost': 0.3,
             'total_amount': 10.1,
@@ -1004,12 +1027,12 @@ class TestOrderView(TestSetUp):
             HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(payload['price'], response.data['price'])
-        self.assertEqual(payload['delivery_cost'], response.data['delivery_cost'])
-        self.assertEqual(payload['total_amount'], response.data['total_amount'])
-        self.assertNotEqual(o.price, response.data['price'])
-        self.assertNotEqual(o.delivery_cost, response.data['delivery_cost'])
-        self.assertNotEqual(o.total_amount, response.data['total_amount'])
+        self.assertEqual(payload['price'], float(response.data['price']))
+        self.assertEqual(payload['delivery_cost'], float(response.data['delivery_cost']))
+        self.assertEqual(payload['total_amount'], float(response.data['total_amount']))
+        self.assertNotEqual(o.price, float(response.data['price']))
+        self.assertNotEqual(o.delivery_cost, float(response.data['delivery_cost']))
+        self.assertNotEqual(o.total_amount, float(response.data['total_amount']))
 
     def test_partial_update_order(self):
         o = self.create_order()
@@ -1036,7 +1059,7 @@ class TestOrderView(TestSetUp):
             content_type='application/json',
             HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
         )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         with self.assertRaises(Order.DoesNotExist):
             ord = Order.objects.get(id=o.id)
         self.assertFalse(Order.objects.filter(id=o.id).exists())
@@ -1146,7 +1169,7 @@ class TestPaymentView(TestSetUp):
             content_type='application/json',
             HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
         )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         with self.assertRaises(Payment.DoesNotExist):
             pa = Payment.objects.get(id=p.id)
         self.assertFalse(Payment.objects.filter(id=p.id).exists())
@@ -1174,7 +1197,7 @@ class TestQuotaView(TestSetUp):
             'current_quota': 3,
             'total_quota': 5,
             'value': 2.2,
-            'date': datetime.date.today(),
+            'date': date.today(),
             'payment': p.pk,
         }
         response = self.client.post(
@@ -1196,7 +1219,7 @@ class TestQuotaView(TestSetUp):
             current_quota=1,
             total_quota=5,
             value=3.2,
-            date=datetime.date.today(),
+            date=date.today(),
             payment=p,
         )
         response = self.client.get(
@@ -1220,13 +1243,21 @@ class TestQuotaView(TestSetUp):
             current_quota=1,
             total_quota=5,
             value=3.2,
-            date=datetime.date.today(),
+            date=date.today(),
             payment=p,
+        )
+        p_new = Payment.objects.create(
+            transaction=7,
+            amount=326.4,
+            method='Cryptocurrency',
+            order=self.create_order(),
         )
         payload = {
             'current_quota': 3,
             'total_quota': 3,
             'value': 4.6,
+            'date': date.today() - timedelta(days=5),
+            'payment': p_new.pk,
         }
         response = self.client.put(
             self.quota_url + f"{q.pk}/",
@@ -1251,7 +1282,7 @@ class TestQuotaView(TestSetUp):
             current_quota=1,
             total_quota=5,
             value=3.2,
-            date=datetime.date.today(),
+            date=date.today(),
             payment=p,
         )
         payload = {
@@ -1279,7 +1310,7 @@ class TestQuotaView(TestSetUp):
             current_quota=1,
             total_quota=5,
             value=3.2,
-            date=datetime.date.today(),
+            date=date.today(),
             payment=p,
         )
         self.assertTrue(Quota.objects.filter(id=q.id).exists())
@@ -1289,7 +1320,7 @@ class TestQuotaView(TestSetUp):
             content_type='application/json',
             HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
         )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         with self.assertRaises(Quota.DoesNotExist):
             qu = Quota.objects.get(id=q.id)
         self.assertFalse(Quota.objects.filter(id=q.id).exists())
