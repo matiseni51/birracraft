@@ -3,7 +3,7 @@ name: PR-backend_tests
 
 on:
   pull_request:
-    branches: [development]
+    branches: [main]
 
   workflow_dispatch:
 
