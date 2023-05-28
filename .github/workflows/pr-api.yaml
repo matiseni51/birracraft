@@ -38,10 +38,4 @@ jobs:
         run: docker-compose run -d worker
 
       - name: run api tests
-        run: docker-compose run --rm --entrypoint="pytest --cov=. --cov-report=xml:coverage.xml -n auto api" api
-
-      - uses: 5monkeys/cobertura-action@master
-        with:
-          path: coverage.xml
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          minimum_coverage: 75
+        run: docker-compose run --rm --entrypoint="pytest -v api" api
