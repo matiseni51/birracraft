@@ -28,14 +28,8 @@ jobs:
       - name: run db
         run: docker-compose up -d db
 
-      - name: build worker
-        run: docker-compose build worker
-
       - name: migrate
-        run: docker-compose run --rm --entrypoint="python manage.py migrate --no-input" api 
-
-      - name: run worker
-        run: docker-compose run -d worker
+        run: docker-compose run --rm --entrypoint="python manage.py migrate --no-input" api
 
       - name: run api tests
         run: docker-compose run --rm --entrypoint="pytest -v api" api
