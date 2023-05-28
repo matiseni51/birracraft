@@ -1,0 +1,44 @@
+# run all the api tests upon creation of a PR on development
+name: PR-backend_tests
+
+on:
+  pull_request:
+    branches: [development]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: clean
+        run: docker-compose down --volumes --remove-orphans --rmi all
+
+      - name: prune volumes
+        run: docker system prune -f --volumes
+
+      - name: build api
+        run: docker-compose build api
+
+      - name: run db
+        run: docker-compose up -d db
+
+      - name: build worker
+        run: docker-compose build worker
+
+      - name: migrate
+        run: docker-compose run --rm api python manage.py migrate
+
+      - name: run worker
+        run: docker-compose run -d worker
+
+      - name: run api tests
+        run: docker-compose run api pytest --cov=. --cov-report=xml:coverage.xml -n auto rodinia
+
+      - uses: 5monkeys/cobertura-action@master
+        with:
+          path: coverage.xml
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          minimum_coverage: 75
