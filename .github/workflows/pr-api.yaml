@@ -32,13 +32,13 @@ jobs:
         run: docker-compose build worker
 
       - name: migrate
-        run: docker-compose run --rm api python manage.py migrate
+        run: docker-compose run --rm --entrypoint="python manage.py migrate --no-input" api 
 
       - name: run worker
         run: docker-compose run -d worker
 
       - name: run api tests
-        run: docker-compose run api pytest --cov=. --cov-report=xml:coverage.xml -n auto rodinia
+        run: docker-compose run --rm --entrypoint="pytest --cov=. --cov-report=xml:coverage.xml -n auto api" api
 
       - uses: 5monkeys/cobertura-action@master
         with:
