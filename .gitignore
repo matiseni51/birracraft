@@ -102,7 +102,6 @@ ENV/
 *.pyc
 db.sqlite3
 media/
-migrations/
 
 ### Windows ###
 # Windows thumbnail cache files
@@ -127,4 +126,3 @@ $RECYCLE.BIN/
 
 *.4gl
 /static
-/recibos/settings/prod.py
