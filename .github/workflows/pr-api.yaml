@@ -29,7 +29,18 @@ jobs:
         run: docker-compose up -d db
 
       - name: migrate
-        run: docker-compose run --rm --entrypoint="python manage.py migrate --no-input" api
+        run: docker-compose run --rm 
+          --entrypoint="python manage.py migrate --no-input" api
+
+      - name: create coverage report file
+        run: touch src/coverage.xml
 
       - name: run api tests
-        run: docker-compose run --rm --entrypoint="pytest -v api" api
+        run: docker-compose run
+          --entrypoint="pytest --cov=. --cov-report=xml:coverage.xml api"
+          -v "/$(pwd)/src/coverage.xml:/usr/src/birracraft/coverage.xml" api
+
+      - uses: 5monkeys/cobertura-action@master
+        with:
+          path: src/coverage.xml
+          minimum_coverage: 80
