@@ -77,7 +77,7 @@ jobs:
           run: docker-compose run -v "/$(pwd)/web:/usr/src/web"
             --entrypoint="npm test -- --coverage --watchAll=false" web
 
-        - uses: 5monkeys/cobertura-action@master
+        - uses: romeovs/lcov-reporter-action@v0.2.16
           with:
-            path: web/coverage/clover.xml
-            minimum_coverage: 80
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            lcov-file: web/coverage/lcov.info
