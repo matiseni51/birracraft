@@ -70,12 +70,12 @@ jobs:
             --entrypoint="python manage.py migrate --no-input" api
 
         - name: install packages
-          run: docker-compose run --entrypoint="npm install"
-            -v "/$(pwd)/web:/usr/src/web" web
+          run: docker-compose run -v "/$(pwd)/web:/usr/src/web"
+            --entrypoint="npm install" web
 
         - name: run web tests
-          run: docker-compose run --entrypoint="npm test -- --coverage"
-            -v "/$(pwd)/web:/usr/src/web" web
+          run: docker-compose run -v "/$(pwd)/web:/usr/src/web"
+            --entrypoint="npm test -- --coverage --watchAll=false" web
 
         - uses: 5monkeys/cobertura-action@master
           with:
