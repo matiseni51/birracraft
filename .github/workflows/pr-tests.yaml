@@ -77,7 +77,7 @@ jobs:
           run: docker-compose run -v "/$(pwd)/web:/usr/src/web"
             --entrypoint="npm test -- --coverage --watchAll=false" web
 
-        - uses: romeovs/lcov-reporter-action@v0.2.16
+        - uses: romeovs/lcov-reporter-action@v0.3.1
           with:
             github-token: ${{ secrets.GITHUB_TOKEN }}
             lcov-file: web/coverage/lcov.info
