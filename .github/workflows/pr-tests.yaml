@@ -1,0 +1,83 @@
+# run all the api tests upon creation of a PR on development
+name: PR-tests
+
+on:
+  pull_request:
+    branches: [main]
+
+  workflow_dispatch:
+
+jobs:
+  api-build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: set up env variables
+        run: echo "${{ vars.ENV_FILE }}" > .env
+
+      - name: clean
+        run: docker-compose down --volumes --remove-orphans --rmi all
+
+      - name: prune volumes
+        run: docker system prune -f --volumes
+
+      - name: build api
+        run: docker-compose build api
+
+      - name: run db
+        run: docker-compose up -d db
+
+      - name: migrate
+        run: docker-compose run --rm 
+          --entrypoint="python manage.py migrate --no-input" api
+
+      - name: run api tests
+        run: docker-compose run
+          --entrypoint="pytest --cov=api --cov-report=xml:coverage.xml api"
+          -v "/$(pwd)/src:/usr/src/birracraft" api
+
+      - uses: 5monkeys/cobertura-action@master
+        with:
+          path: src/coverage.xml
+          minimum_coverage: 80
+
+  web-build-and-test:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v3
+
+        - name: set up env variables
+          run: echo "${{ vars.ENV_FILE }}" > .env
+
+        - name: clean
+          run: docker-compose down --volumes --remove-orphans --rmi all
+
+        - name: prune volumes
+          run: docker system prune -f --volumes
+
+        - name: build api
+          run: docker-compose build api
+
+        - name: build web
+          run: docker-compose build web
+
+        - name: run db
+          run: docker-compose up -d db
+
+        - name: migrate
+          run: docker-compose run --rm 
+            --entrypoint="python manage.py migrate --no-input" api
+
+        - name: install packages
+          run: docker-compose run -v "/$(pwd)/web:/usr/src/web"
+            --entrypoint="npm install" web
+
+        - name: run web tests
+          run: docker-compose run -v "/$(pwd)/web:/usr/src/web"
+            --entrypoint="npm test -- --coverage --watchAll=false" web
+
+        - uses: romeovs/lcov-reporter-action@v0.3.1
+          with:
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            lcov-file: web/coverage/lcov.info
