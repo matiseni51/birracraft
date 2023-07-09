@@ -1,6 +1,6 @@
 const BASE_URL = 'http://localhost:8680/api'
 
-export const API_AUTH_CALL = async (username: string, password: string) => {
+export const API_AUTH_CALL = async (username, password) => {
   const url = `${BASE_URL}/auth/token/`;
   const headers = new Headers({
       'Content-Type': 'application/json',
