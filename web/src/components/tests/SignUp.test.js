@@ -1,7 +1,6 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { act } from "react-dom/test-utils";
-import { unmountComponentAtNode } from "react-dom";
 import { MemoryRouter } from "react-router-dom";
 import Contents from "../Contents";
 
@@ -25,9 +24,6 @@ beforeEach(() => {
 
 afterEach(() => {
   // cleanup on exiting
-  unmountComponentAtNode(container);
-  container.remove();
-  container = null;
   cleanup();
 });
 

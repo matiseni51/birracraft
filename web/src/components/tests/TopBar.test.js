@@ -1,7 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { act } from "react-dom/test-utils";
-import { unmountComponentAtNode } from "react-dom";
 import { MemoryRouter } from "react-router-dom";
 import TopBar from "../TopBar";
 import Contents from "../Contents";
@@ -26,11 +25,29 @@ beforeEach(() => {
 
 afterEach(() => {
   // cleanup on exiting
-  unmountComponentAtNode(container);
-  container.remove();
-  container = null;
   cleanup();
 });
+
+const authenticate = () => {
+  // setting localStorage before rendering the page.
+  cleanup();
+  window.localStorage.setItem(
+    'authTokens',
+    '{"refresh":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9", "access":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"}'
+  );
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  act(() => {
+    render(
+      // render home page before each test
+      <MemoryRouter initialEntries={["/"]}>
+        <TopBar />
+        <Contents />
+      </MemoryRouter>,
+      container
+    );
+  });
+}
 
 test("elements in TopBar", () => {
   expect(screen.getByText("Sign In")).toBeInTheDocument();
@@ -105,4 +122,15 @@ test("click Register button", () => {
     expect(input).toHaveAttribute("required");
   });
   expect(screen.queryByText(/welcome/i)).not.toBeInTheDocument();
+});
+
+test("elements in TopBar when auth", () => {
+  authenticate();
+
+  expect(screen.queryByText(/welcome/i)).toBeInTheDocument();
+  expect(screen.getByText("Orders")).toBeInTheDocument();
+  expect(screen.getByText("Payments")).toBeInTheDocument();
+  expect(screen.getByText("Products")).toBeInTheDocument();
+  expect(screen.getByText("Customers")).toBeInTheDocument();
+  expect(screen.getByText("Report")).toBeInTheDocument();
 });
