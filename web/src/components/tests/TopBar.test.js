@@ -124,7 +124,7 @@ test("click Register button", () => {
   expect(screen.queryByText(/welcome/i)).not.toBeInTheDocument();
 });
 
-test("elements in TopBar when auth", () => {
+test("elements in auth-TopBar", () => {
   authenticate();
 
   expect(screen.queryByText(/welcome/i)).toBeInTheDocument();
@@ -133,4 +133,32 @@ test("elements in TopBar when auth", () => {
   expect(screen.getByText("Products")).toBeInTheDocument();
   expect(screen.getByText("Customers")).toBeInTheDocument();
   expect(screen.getByText("Report")).toBeInTheDocument();
+
+  expect(screen.getByTestId("PersonIcon")).toBeInTheDocument();
+  expect(screen.getByText("Profile")).toBeInTheDocument();
+  expect(screen.getByText("Account")).toBeInTheDocument();
+  expect(screen.getByText("Logout")).toBeInTheDocument();
+});
+
+test("auth-TopBar click Payments link", async () => {
+  authenticate();
+
+  // mock fetch return empty list
+  global.fetch = jest.fn(() => Promise.resolve({ json: () => Promise.resolve([])}));
+
+  const paymentsLink = screen.getByText("Payments");
+  expect(paymentsLink).toBeInTheDocument();
+  await act( async () => {
+    userEvent.click(paymentsLink);
+  });
+
+  // Payment's table columns
+  expect(screen.getByText(/transaction/i)).toBeInTheDocument();
+  expect(screen.getByText(/amount/i)).toBeInTheDocument();
+  expect(screen.getByText(/method/i)).toBeInTheDocument();
+  // Quota's table columns
+  expect(screen.getByText(/quota number/i)).toBeInTheDocument();
+  expect(screen.getByText(/total quotas/i)).toBeInTheDocument();
+  expect(screen.getByText(/value/i)).toBeInTheDocument();
+  expect(screen.getByText(/date/i)).toBeInTheDocument();
 });
