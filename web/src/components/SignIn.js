@@ -131,7 +131,7 @@ export default function SignIn() {
         onClose={handleClose}
         title={'User/Password incorrect'}
         body={
-          'The input data is incorrect. Check that the credentials used'
+          'The input data is incorrect. Check the credentials used'
         }
       />
     </ThemeProvider>
