@@ -41,6 +41,9 @@ export default function DialogNewProduct(props) {
     } else {
       const container = containers.find(c => c.pk == data.get('container'));
       const flavour = flavours.find(f => f.pk == data.get('flavour'));
+      const price = (container && flavour)
+        ? (container.liters * flavour.price_per_lt).toFixed(2)
+        : null;
       return await API_DATA_CALL(
         'POST',
         '/product/',
@@ -49,7 +52,7 @@ export default function DialogNewProduct(props) {
           'container': data.get('container'),
           'flavour': data.get('flavour'),
           'arrived_date': data.get('arrived_date'),
-          'price': (container.liters * flavour.price_per_lt).toFixed(2),
+          'price': price,
           'state': data.get('state'),
         }
       ).then(response => {
