@@ -3,6 +3,7 @@ version: '3.7'
 services:
 
   api:
+    image: "${REGISTRY_HUB}/birracraft-api:latest"
     build:
       context: ./src
       target: base
@@ -83,6 +84,7 @@ services:
       birracraft-net:
 
   web:
+    image: "${REGISTRY_HUB}/birracraft-web:latest"
     build:
       context: ./web
       dockerfile: Dockerfile
