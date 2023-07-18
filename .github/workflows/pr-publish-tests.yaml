@@ -1,0 +1,98 @@
+# on a PR to main,
+# build & publish the images to ghcr, plus, run respective tests
+name: pr-publish-tests
+
+on:
+  pull_request:
+    branches: [main]
+
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: set up env variables
+        run: echo "${{ vars.ENV_FILE }}" > .env
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: build & push api
+        run: |
+          docker-compose build api
+          docker push ghcr.io/matiseni51/birracraft-api:latest
+
+      - name: build & push web
+        run: |
+          docker-compose build web
+          docker push ghcr.io/matiseni51/birracraft-web:latest
+
+  api-test:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: set up env variables
+        run: echo "${{ vars.ENV_FILE }}" > .env
+
+      - name: pull api
+        run: docker pull ghcr.io/matiseni51/birracraft-api:latest
+
+      - name: run db
+        run: docker-compose up -d db
+
+      - name: migrate
+        run: docker-compose run --rm 
+          --entrypoint="python manage.py migrate --no-input" api
+
+      - name: run api tests
+        run: docker-compose run
+          --entrypoint="pytest --cov=api --cov-report=xml:coverage.xml api"
+          -v "/$(pwd)/src:/usr/src/birracraft" api
+
+      - uses: 5monkeys/cobertura-action@master
+        with:
+          path: src/coverage.xml
+          minimum_coverage: 80
+
+  web-test:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: set up env variables
+        run: echo "${{ vars.ENV_FILE }}" > .env
+
+      - name: pull api & web
+        run: |
+          docker pull ghcr.io/matiseni51/birracraft-api:latest
+          docker pull ghcr.io/matiseni51/birracraft-web:latest
+
+      - name: run db
+        run: docker-compose up -d db
+
+      - name: migrate
+        run: docker-compose run --rm 
+          --entrypoint="python manage.py migrate --no-input" api
+
+      - name: install packages
+        run: docker-compose run -v "/$(pwd)/web:/usr/src/web"
+          --entrypoint="npm install" web
+
+      - name: run web tests
+        run: docker-compose run -v "/$(pwd)/web:/usr/src/web"
+          --entrypoint="npm test -- --coverage --watchAll=false" web
+
+      - uses: romeovs/lcov-reporter-action@v0.3.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          lcov-file: web/coverage/lcov.info
