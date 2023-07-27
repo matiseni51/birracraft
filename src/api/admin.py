@@ -1,7 +1,16 @@
 from django.contrib import admin
-from api.models import *
+from api.models import (
+    Customer,
+    Container,
+    Flavour,
+    Product,
+    Order,
+    Payment,
+    Quota
+)
 
 # Register your models here.
+
 
 @admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):

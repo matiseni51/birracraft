@@ -6,14 +6,14 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils import six
 from birracraft.celery import app
-from api.models import *
+from api.models import Order, Payment, Quota, Product, Container, Flavour
 from openpyxl import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
 from datetime import datetime
 
 
 def send_reset_pass_mail(request, user):
-    msg=render_to_string('../templates/reset_pass_mail.html',{
+    msg = render_to_string('../templates/reset_pass_mail.html', {
         'username': user.username,
         'protocol': request.scheme,
         'domain': request.get_host(),
@@ -32,7 +32,7 @@ def send_reset_pass_mail(request, user):
 
 def send_verification_mail(request):
     user_email = request.data['email']
-    msg=render_to_string('../templates/validate_user_mail.html',{
+    msg = render_to_string('../templates/validate_user_mail.html', {
         'username': request.data['username'],
         'protocol': request.scheme,
         'domain': request.get_host(),
@@ -54,6 +54,7 @@ class TokenGenerator(PasswordResetTokenGenerator):
         return (
             six.text_type(user) + six.text_type(timestamp)
         )
+
 
 account_activation_token = TokenGenerator()
 
@@ -129,7 +130,7 @@ def generate_report(data):
                 data['date_from'],
                 datetime.today().strftime('%Y-%m-%d'))
 
-    msg=render_to_string('../templates/report_mail.html',{
+    msg = render_to_string('../templates/report_mail.html', {
         'date_from': data['date_from'],
         'username': data['username'],
         })

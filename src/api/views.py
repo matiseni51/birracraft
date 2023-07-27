@@ -7,7 +7,15 @@ from django.core import serializers as s
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from api.models import *
+from api.models import (
+    Customer,
+    Container,
+    Flavour,
+    Product,
+    Order,
+    Payment,
+    Quota
+)
 from api import serializers, utils
 import json
 
@@ -18,7 +26,7 @@ def activate_user(request, uidb64, token):
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(email=uid)
-    except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
     if user and utils.account_activation_token.check_token(user.email, token):
         user.is_active = True
@@ -36,7 +44,7 @@ def reset_password(request, uidb64, token):
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
-    except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
     if user and utils.account_activation_token.check_token(user, token):
         page = '/ResetPassForm'
@@ -117,6 +125,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 data={'code': 500, 'message': str(e)}, status=500
             )
 
+
 class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = serializers.CustomerSerializer
@@ -181,6 +190,7 @@ class QuotaViewSet(viewsets.ModelViewSet):
             ).values())
         return Response(qs)
 
+
 class ReportViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = serializers.ReportSerializer
 
@@ -192,9 +202,8 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
             data = {
                 'email': request.user.email,
                 'username': request.user.username,
-                'date_from': serializer.validated_data['date_from']
-                    .strftime('%Y-%m-%d')
-                }
+                'date_from': serializer.validated_data['date_from'].strftime('%Y-%m-%d')  # noqa: E501
+            }
             utils.generate_report.delay(data)
             return Response(
                 {'code': status.HTTP_200_OK},

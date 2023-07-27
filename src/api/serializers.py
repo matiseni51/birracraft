@@ -1,7 +1,15 @@
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
-from api.models import *
+from api.models import (
+    Customer,
+    Container,
+    Flavour,
+    Product,
+    Order,
+    Payment,
+    Quota
+)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -22,8 +30,16 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('pk', 'username', 'password', 'first_name', 'last_name',
-                    'email', 'is_staff', 'is_active')
+        fields = (
+            'pk',
+            'username',
+            'password',
+            'first_name',
+            'last_name',
+            'email',
+            'is_staff',
+            'is_active'
+        )
 
 
 class UserResetPassSerializer(serializers.Serializer):
@@ -66,8 +82,15 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('pk', 'code', 'container', 'flavour',
-                'arrived_date', 'price', 'state')
+        fields = (
+            'pk',
+            'code',
+            'container',
+            'flavour',
+            'arrived_date',
+            'price',
+            'state'
+        )
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -85,8 +108,17 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ('pk', 'date', 'products', 'price', 'delivery_cost',
-                'total_amount', 'customer', 'state', 'comment')
+        fields = (
+            'pk',
+            'date',
+            'products',
+            'price',
+            'delivery_cost',
+            'total_amount',
+            'customer',
+            'state',
+            'comment'
+        )
 
 
 class PaymentSerializer(serializers.ModelSerializer):
@@ -98,8 +130,14 @@ class PaymentSerializer(serializers.ModelSerializer):
 class QuotaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Quota
-        fields = ('pk', 'current_quota', 'total_quota',
-                'value', 'date', 'payment')
+        fields = (
+            'pk',
+            'current_quota',
+            'total_quota',
+            'value',
+            'date',
+            'payment'
+        )
 
 
 class QuotasByPaymentSerializer(serializers.Serializer):

@@ -2,10 +2,11 @@ from django.db import models
 
 # Create your models here.
 
+
 class Customer(models.Model):
     _type = [
-        ('Particular','Particular'),
-        ('Comerce','Comerce'),
+        ('Particular', 'Particular'),
+        ('Comerce', 'Comerce'),
     ]
     name = models.CharField(max_length=30)
     address = models.CharField(max_length=120)
@@ -59,9 +60,9 @@ class Flavour(models.Model):
 
 class Product(models.Model):
     _state = [
-        ('In Stock','In Stock'),
-        ('In Transit','In Transit'),
-        ('Empty','Empty'),
+        ('In Stock', 'In Stock'),
+        ('In Transit', 'In Transit'),
+        ('Empty', 'Empty'),
     ]
     code = models.CharField(
         max_length=5, help_text='Code graven in Kegs')
