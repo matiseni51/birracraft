@@ -91,6 +91,10 @@ jobs:
         run: docker-compose run -v "/$(pwd)/web:/usr/src/web"
           --entrypoint="npm install" web
 
+      - name: run format check
+        run: docker-compose run -v "/$(pwd)/web:/usr/src/web"
+          --entrypoint="npm run format" web
+
       - name: run web tests
         run: docker-compose run -v "/$(pwd)/web:/usr/src/web"
           --entrypoint="npm test -- --coverage --watchAll=false" web
