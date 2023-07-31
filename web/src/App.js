@@ -1,11 +1,10 @@
-import React from 'react';
-import './App.css';
-import { BrowserRouter } from 'react-router-dom';
-import { Container } from '@mui/material';
-import TopBar from './components/TopBar.js';
-import Contents from './components/Contents.js';
-import Footer from './components/Footer.js';
-
+import React from "react";
+import "./App.css";
+import { BrowserRouter } from "react-router-dom";
+import { Container } from "@mui/material";
+import TopBar from "./components/TopBar.js";
+import Contents from "./components/Contents.js";
+import Footer from "./components/Footer.js";
 
 function App() {
   return (
@@ -18,7 +17,7 @@ function App() {
           </Container>
           <Footer />
         </BrowserRouter>
-     </div>
+      </div>
     </React.Fragment>
   );
 }

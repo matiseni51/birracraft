@@ -3,9 +3,18 @@ from django.contrib.auth.models import User
 
 from rest_framework import status
 
-from api.models import *
+from api.models import (
+    Customer,
+    Product,
+    Container,
+    Flavour,
+    Order,
+    Payment,
+    Quota
+)
 
 from datetime import date, timedelta
+
 
 class TestSetUp(TransactionTestCase):
     def setUp(self):
@@ -38,7 +47,7 @@ class TestSetUp(TransactionTestCase):
         )
         self.access_token = res.data['access']
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-    
+
     def create_product(self):
         c = Container.objects.create(
             type='Growler',
@@ -81,6 +90,7 @@ class TestSetUp(TransactionTestCase):
         o.products.add(p.pk, p2.pk)
         return o
 
+
 class TestUserModel(TestSetUp):
     user_payload = {
             'username': 'arthur_abbey',
@@ -106,7 +116,7 @@ class TestUserView(TestSetUp):
             'email': 'bb@gmail.com',
         }
 
-    def test_auth_view(self):    
+    def test_auth_view(self):
         response = self.client.post(
             self.register_url,
             data=self.user_payload,
@@ -180,7 +190,7 @@ class TestCustomerModel(TestSetUp):
         self.assertTrue(Customer.objects.filter(id=c.id).exists())
         c.delete()
         with self.assertRaises(Customer.DoesNotExist):
-            cu = Customer.objects.get(id=c.id)
+            Customer.objects.get(id=c.id)
         self.assertFalse(Customer.objects.filter(id=c.id).exists())
 
 
@@ -224,7 +234,7 @@ class TestContainerModel(TestSetUp):
         self.assertTrue(Container.objects.filter(id=c.id).exists())
         c.delete()
         with self.assertRaises(Container.DoesNotExist):
-            co = Container.objects.get(id=c.id)
+            Container.objects.get(id=c.id)
         self.assertFalse(Container.objects.filter(id=c.id).exists())
 
 
@@ -274,7 +284,7 @@ class TestFlavourModel(TestSetUp):
         self.assertTrue(Flavour.objects.filter(id=f.id).exists())
         f.delete()
         with self.assertRaises(Flavour.DoesNotExist):
-            fl = Flavour.objects.get(id=f.id)
+            Flavour.objects.get(id=f.id)
         self.assertFalse(Flavour.objects.filter(id=f.id).exists())
 
 
@@ -325,7 +335,7 @@ class TestProductModel(TestSetUp):
         self.assertTrue(Product.objects.filter(id=p.id).exists())
         p.delete()
         with self.assertRaises(Product.DoesNotExist):
-            pr = Product.objects.get(id=p.id)
+            Product.objects.get(id=p.id)
         self.assertFalse(Product.objects.filter(id=p.id).exists())
 
 
@@ -380,8 +390,9 @@ class TestOrderModel(TestSetUp):
         self.assertTrue(Order.objects.filter(id=o.id).exists())
         o.delete()
         with self.assertRaises(Order.DoesNotExist):
-            ord = Order.objects.get(id=o.id)
+            Order.objects.get(id=o.id)
         self.assertFalse(Order.objects.filter(id=o.id).exists())
+
 
 class TestPaymentModel(TestSetUp):
     def test_create_payment(self):
@@ -429,7 +440,7 @@ class TestPaymentModel(TestSetUp):
         self.assertTrue(Payment.objects.filter(id=p.id).exists())
         p.delete()
         with self.assertRaises(Payment.DoesNotExist):
-            pa = Payment.objects.get(id=p.id)
+            Payment.objects.get(id=p.id)
         self.assertFalse(Payment.objects.filter(id=p.id).exists())
 
 
@@ -498,7 +509,7 @@ class TestQuotaModel(TestSetUp):
         self.assertTrue(Quota.objects.filter(id=q.id).exists())
         q.delete()
         with self.assertRaises(Quota.DoesNotExist):
-            pa = Quota.objects.get(id=q.id)
+            Quota.objects.get(id=q.id)
         self.assertFalse(Quota.objects.filter(id=q.id).exists())
 
 
@@ -528,7 +539,7 @@ class TestCustomerView(TestSetUp):
             HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-    
+
     def test_read_customer(self):
         c = Customer.objects.create(
             name='read_customer',
@@ -624,7 +635,7 @@ class TestCustomerView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         with self.assertRaises(Customer.DoesNotExist):
-            cu = Customer.objects.get(id=c.id)
+            Customer.objects.get(id=c.id)
         self.assertFalse(Customer.objects.filter(id=c.id).exists())
 
 
@@ -651,7 +662,7 @@ class TestContainerView(TestSetUp):
             HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-    
+
     def test_read_container(self):
         c = Container.objects.create(
             type='Growler',
@@ -721,7 +732,7 @@ class TestContainerView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         with self.assertRaises(Container.DoesNotExist):
-            cu = Container.objects.get(id=c.id)
+            Container.objects.get(id=c.id)
         self.assertFalse(Container.objects.filter(id=c.id).exists())
 
 
@@ -787,10 +798,16 @@ class TestFlavourView(TestSetUp):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(payload['name'], response.data['name'])
         self.assertEqual(payload['description'], response.data['description'])
-        self.assertEqual(payload['price_per_lt'], float(response.data['price_per_lt']))
+        self.assertEqual(
+            payload['price_per_lt'],
+            float(response.data['price_per_lt'])
+        )
         self.assertNotEqual(f.name, response.data['name'])
         self.assertNotEqual(f.description, response.data['description'])
-        self.assertNotEqual(f.price_per_lt, float(response.data['price_per_lt']))
+        self.assertNotEqual(
+            f.price_per_lt,
+            float(response.data['price_per_lt'])
+        )
 
     def test_partial_update_flavour(self):
         f = Flavour.objects.create(
@@ -827,7 +844,7 @@ class TestFlavourView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         with self.assertRaises(Flavour.DoesNotExist):
-            fl = Flavour.objects.get(id=f.id)
+            Flavour.objects.get(id=f.id)
         self.assertFalse(Flavour.objects.filter(id=f.id).exists())
 
 
@@ -877,7 +894,10 @@ class TestProductView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(p.code, response.data['code'])
-        self.assertEqual(p.arrived_date.strftime('%Y-%m-%d'), response.data['arrived_date'])
+        self.assertEqual(
+            p.arrived_date.strftime('%Y-%m-%d'),
+            response.data['arrived_date']
+        )
         self.assertEqual(p.price, float(response.data['price']))
         self.assertEqual(p.state, response.data['state'])
 
@@ -942,7 +962,7 @@ class TestProductView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         with self.assertRaises(Product.DoesNotExist):
-            pr = Product.objects.get(id=p.id)
+            Product.objects.get(id=p.id)
         self.assertFalse(Product.objects.filter(id=p.id).exists())
 
 
@@ -994,7 +1014,10 @@ class TestOrderView(TestSetUp):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(o.date.strftime('%Y-%m-%d'), response.data['date'])
         self.assertEqual(o.price, float(response.data['price']))
-        self.assertEqual(o.delivery_cost, float(response.data['delivery_cost']))
+        self.assertEqual(
+            o.delivery_cost,
+            float(response.data['delivery_cost'])
+        )
         self.assertEqual(o.customer.name, response.data['customer'])
         self.assertEqual(o.state, response.data['state'])
         self.assertEqual(o.comment, response.data['comment'])
@@ -1028,11 +1051,23 @@ class TestOrderView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(payload['price'], float(response.data['price']))
-        self.assertEqual(payload['delivery_cost'], float(response.data['delivery_cost']))
-        self.assertEqual(payload['total_amount'], float(response.data['total_amount']))
+        self.assertEqual(
+            payload['delivery_cost'],
+            float(response.data['delivery_cost'])
+        )
+        self.assertEqual(
+            payload['total_amount'],
+            float(response.data['total_amount'])
+        )
         self.assertNotEqual(o.price, float(response.data['price']))
-        self.assertNotEqual(o.delivery_cost, float(response.data['delivery_cost']))
-        self.assertNotEqual(o.total_amount, float(response.data['total_amount']))
+        self.assertNotEqual(
+            o.delivery_cost,
+            float(response.data['delivery_cost'])
+        )
+        self.assertNotEqual(
+            o.total_amount,
+            float(response.data['total_amount'])
+        )
 
     def test_partial_update_order(self):
         o = self.create_order()
@@ -1061,7 +1096,7 @@ class TestOrderView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         with self.assertRaises(Order.DoesNotExist):
-            ord = Order.objects.get(id=o.id)
+            Order.objects.get(id=o.id)
         self.assertFalse(Order.objects.filter(id=o.id).exists())
 
 
@@ -1171,7 +1206,7 @@ class TestPaymentView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         with self.assertRaises(Payment.DoesNotExist):
-            pa = Payment.objects.get(id=p.id)
+            Payment.objects.get(id=p.id)
         self.assertFalse(Payment.objects.filter(id=p.id).exists())
 
 
@@ -1267,7 +1302,10 @@ class TestQuotaView(TestSetUp):
             HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(payload['current_quota'], response.data['current_quota'])
+        self.assertEqual(
+            payload['current_quota'],
+            response.data['current_quota']
+        )
         self.assertEqual(payload['total_quota'], response.data['total_quota'])
         self.assertNotEqual(q.value, response.data['value'])
 
@@ -1296,7 +1334,10 @@ class TestQuotaView(TestSetUp):
             HTTP_AUTHORIZATION=f'Bearer {self.access_token}'
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(payload['current_quota'], response.data['current_quota'])
+        self.assertEqual(
+            payload['current_quota'],
+            response.data['current_quota']
+        )
         self.assertEqual(q.total_quota, response.data['total_quota'])
 
     def test_delete_quota(self):
@@ -1322,5 +1363,5 @@ class TestQuotaView(TestSetUp):
         )
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         with self.assertRaises(Quota.DoesNotExist):
-            qu = Quota.objects.get(id=q.id)
+            Quota.objects.get(id=q.id)
         self.assertFalse(Quota.objects.filter(id=q.id).exists())

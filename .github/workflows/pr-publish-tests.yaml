@@ -53,6 +53,9 @@ jobs:
         run: docker-compose run --rm 
           --entrypoint="python manage.py migrate --no-input" api
 
+      - name: run format check
+        run: docker-compose run --rm --entrypoint="flake8" api
+
       - name: run api tests
         run: docker-compose run
           --entrypoint="pytest --cov=api --cov-report=xml:coverage.xml api"
@@ -87,6 +90,10 @@ jobs:
       - name: install packages
         run: docker-compose run -v "/$(pwd)/web:/usr/src/web"
           --entrypoint="npm install" web
+
+      - name: run format check
+        run: docker-compose run -v "/$(pwd)/web:/usr/src/web"
+          --entrypoint="npm run format" web
 
       - name: run web tests
         run: docker-compose run -v "/$(pwd)/web:/usr/src/web"

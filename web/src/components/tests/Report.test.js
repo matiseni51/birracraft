@@ -11,9 +11,9 @@ beforeEach(() => {
   container = document.createElement("div");
   document.body.appendChild(container);
   window.localStorage.setItem(
-    'authTokens',
+    "authTokens",
     '{"refresh":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9", \
-    "access":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"}'
+    "access":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"}',
   );
   act(() => {
     render(
@@ -21,7 +21,7 @@ beforeEach(() => {
       <MemoryRouter initialEntries={["/Report"]}>
         <Contents />
       </MemoryRouter>,
-      container
+      container,
     );
   });
 });
@@ -33,23 +33,27 @@ afterEach(() => {
 
 test("elements in Report", () => {
   expect(screen.getByTestId("ArticleIcon")).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Report", level: 1 })).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: "Report", level: 1 }),
+  ).toBeInTheDocument();
   const dateFromInput = document.getElementById("dateFrom");
-  expect(dateFromInput).toHaveAttribute(
-    "type", "date"
-  );
+  expect(dateFromInput).toHaveAttribute("type", "date");
   expect(screen.getByText(/generate report/i)).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: /generate report/i })).toHaveAttribute(
-    "type", "submit"
-  );
+  expect(
+    screen.getByRole("button", { name: /generate report/i }),
+  ).toHaveAttribute("type", "submit");
 });
 
 test("click generate Report button", async () => {
-  global.fetch = jest.fn(() => Promise.resolve({ json: () => Promise.resolve([])}));
+  global.fetch = jest.fn(() =>
+    Promise.resolve({ json: () => Promise.resolve([]) }),
+  );
 
-  const generateButton = screen.getByRole("button", { name: /generate report/i });
+  const generateButton = screen.getByRole("button", {
+    name: /generate report/i,
+  });
   expect(generateButton).toBeInTheDocument();
-  await act( async () => {
+  await act(async () => {
     userEvent.click(generateButton);
   });
 

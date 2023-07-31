@@ -9,31 +9,33 @@ let container = null;
 const original = window.location;
 
 beforeAll(() => {
-  Object.defineProperty(window, 'location', {
+  Object.defineProperty(window, "location", {
     configurable: true,
     value: { reload: jest.fn() },
   });
 });
 
-beforeEach(async() => {
+beforeEach(async () => {
   // authentication data
   window.localStorage.setItem(
-    'authTokens',
+    "authTokens",
     '{"refresh":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9", \
-    "access":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"}'
+    "access":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"}',
   );
   // set initial request
-  global.fetch = jest.fn(() => Promise.resolve({ json: () => Promise.resolve([])}));
+  global.fetch = jest.fn(() =>
+    Promise.resolve({ json: () => Promise.resolve([]) }),
+  );
   // setup a DOM element as a render target
   container = document.createElement("div");
   document.body.appendChild(container);
-  await act( async() => {
+  await act(async () => {
     render(
       // render home page before each test
       <MemoryRouter initialEntries={["/Customers"]}>
         <Contents />
       </MemoryRouter>,
-      container
+      container,
     );
   });
 });
@@ -44,26 +46,44 @@ afterEach(() => {
 });
 
 afterAll(() => {
-  Object.defineProperty(window, 'location', { configurable: true, value: original });
+  Object.defineProperty(window, "location", {
+    configurable: true,
+    value: original,
+  });
 });
 
 test("elements in Customers", () => {
-  expect(screen.getByRole("heading", { name: "Customers", level: 3 })).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: "Customers", level: 3 }),
+  ).toBeInTheDocument();
   // Customer's table columns
   expect(screen.getAllByRole("columnheader").length).toBe(5);
-  expect(screen.getByRole("columnheader", { name: "Name" })).toBeInTheDocument();
-  expect(screen.getByRole("columnheader", { name: "Email" })).toBeInTheDocument();
-  expect(screen.getByRole("columnheader", { name: "Phone Number" })).toBeInTheDocument();
-  expect(screen.getByRole("columnheader", { name: "Address" })).toBeInTheDocument();
-  expect(screen.getByRole("columnheader", { name: "Type" })).toBeInTheDocument();
+  expect(
+    screen.getByRole("columnheader", { name: "Name" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("columnheader", { name: "Email" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("columnheader", { name: "Phone Number" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("columnheader", { name: "Address" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("columnheader", { name: "Type" }),
+  ).toBeInTheDocument();
 
   expect(screen.getByText(/new/i)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /new/i })).toHaveAttribute(
-    "type", "button"
+    "type",
+    "button",
   );
   expect(screen.getByTestId("AddCircleIcon")).toBeInTheDocument();
 
-  expect(screen.getByRole("row", { name: /rows per page/i })).toBeInTheDocument();
+  expect(
+    screen.getByRole("row", { name: /rows per page/i }),
+  ).toBeInTheDocument();
 });
 
 test("click New button - elements", () => {
@@ -71,42 +91,54 @@ test("click New button - elements", () => {
   expect(newButton).toBeInTheDocument();
   userEvent.click(newButton);
 
-  expect(screen.getByRole("dialog", { name: "Create New Customer" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Create New Customer", level: 2 })).toBeInTheDocument();
+  expect(
+    screen.getByRole("dialog", { name: "Create New Customer" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: "Create New Customer", level: 2 }),
+  ).toBeInTheDocument();
 
   expect(screen.getAllByRole("textbox")).toHaveLength(4);
-  expect(screen.getByRole("textbox", { name: "Name"})).toBeInTheDocument();
-  expect(screen.getByRole("textbox", { name: "Email Address"})).toBeInTheDocument();
-  expect(screen.getByRole("textbox", { name: "Phone Number"})).toBeInTheDocument();
-  expect(screen.getByRole("textbox", { name: "Address"})).toBeInTheDocument();
+  expect(screen.getByRole("textbox", { name: "Name" })).toBeInTheDocument();
   expect(
-    [...document.getElementsByTagName("input")].find((item) => item.name == "type")
+    screen.getByRole("textbox", { name: "Email Address" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("textbox", { name: "Phone Number" }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("textbox", { name: "Address" })).toBeInTheDocument();
+  expect(
+    [...document.getElementsByTagName("input")].find(
+      (item) => item.name == "type",
+    ),
   ).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Save" })).toHaveAttribute(
-    "type", "submit"
+    "type",
+    "submit",
   );
 });
-
 
 test("click New button - click Save success", async () => {
   const newButton = screen.getByRole("button", { name: /new/i });
   expect(newButton).toBeInTheDocument();
   userEvent.click(newButton);
 
-  expect(screen.getByRole("heading", { name: "Create New Customer", level: 2 })).toBeInTheDocument();
-  expect(screen.getByText(
-    "Add a new client to start assigned Orders."
-  )).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: "Create New Customer", level: 2 }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText("Add a new client to start assigned Orders."),
+  ).toBeInTheDocument();
 
   const saveButton = screen.getByRole("button", { name: "Save" });
-  expect(saveButton).toHaveAttribute(
-    "type", "submit"
-  );
+  expect(saveButton).toHaveAttribute("type", "submit");
 
   // mock fetch to succeed before clicking Save
-  global.fetch = jest.fn(() => Promise.resolve({ json: () => Promise.resolve({pk: 1})}));
+  global.fetch = jest.fn(() =>
+    Promise.resolve({ json: () => Promise.resolve({ pk: 1 }) }),
+  );
 
-  await act( async () => {
+  await act(async () => {
     userEvent.click(saveButton);
   });
 
@@ -119,17 +151,17 @@ test("click New button - click Save fails", async () => {
   expect(newButton).toBeInTheDocument();
   userEvent.click(newButton);
 
-  expect(screen.getByRole("heading", { name: "Create New Customer", level: 2 })).toBeInTheDocument();
-  expect(screen.getByText(
-    "Add a new client to start assigned Orders."
-  )).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: "Create New Customer", level: 2 }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText("Add a new client to start assigned Orders."),
+  ).toBeInTheDocument();
 
   const saveButton = screen.getByRole("button", { name: "Save" });
-  expect(saveButton).toHaveAttribute(
-    "type", "submit"
-  );
+  expect(saveButton).toHaveAttribute("type", "submit");
 
-  await act( async () => {
+  await act(async () => {
     userEvent.click(saveButton);
   });
 
