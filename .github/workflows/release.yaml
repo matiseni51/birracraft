@@ -4,11 +4,12 @@ on:
   push:
     branches:
       - releases
+  
+  workflow_dispatch:
 
 jobs:
   tag-and-release:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged
     steps:
       - name: Checkout
         uses: actions/checkout@v3
